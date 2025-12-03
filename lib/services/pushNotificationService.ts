@@ -1,6 +1,26 @@
 import { notificationsApi } from "../api/notifications";
 import { getStoredUser } from "../api/client";
 
+// Service Worker event types
+interface ExtendableEvent extends Event {
+    waitUntil(promise: Promise<any>): void;
+}
+
+interface PushEvent extends ExtendableEvent {
+    data?: PushMessageData;
+}
+
+interface NotificationEvent extends ExtendableEvent {
+    notification: Notification;
+}
+
+interface PushMessageData {
+    json(): any;
+    text(): string;
+    arrayBuffer(): ArrayBuffer;
+    blob(): Blob;
+}
+
 /**
  * Push Notification Service
  * Handles browser push notifications using Web Push API
@@ -146,10 +166,11 @@ class PushNotificationService {
     private setupPushListener(): void {
         if (!this.registration) return;
 
-        this.registration.addEventListener("push", (event) => {
-            if (!event.data) return;
+        this.registration.addEventListener("push", (event: Event) => {
+            const pushEvent = event as PushEvent;
+            if (!pushEvent.data) return;
 
-            const data = event.data.json();
+            const data = pushEvent.data.json();
             const title = data.title || "New Notification";
             const options: NotificationOptions = {
                 body: data.body || data.message || "",
@@ -160,26 +181,33 @@ class PushNotificationService {
                 requireInteraction: false,
             };
 
-            event.waitUntil(
+            pushEvent.waitUntil(
                 this.registration!.showNotification(title, options)
             );
         });
 
         // Handle notification clicks
-        this.registration.addEventListener("notificationclick", (event) => {
-            event.notification.close();
+        this.registration.addEventListener(
+            "notificationclick",
+            (event: Event) => {
+                const notificationEvent = event as NotificationEvent;
+                notificationEvent.notification.close();
 
-            const data = event.notification.data;
-            const url = data?.url || "/dashboard";
+                const data = notificationEvent.notification.data;
+                const url = data?.url || "/dashboard";
 
-            event.waitUntil(clients.openWindow(url));
-        });
+                // clients is available in service worker context
+                notificationEvent.waitUntil(
+                    (globalThis as any).clients.openWindow(url)
+                );
+            }
+        );
     }
 
     /**
      * Convert VAPID key from base64 URL to Uint8Array
      */
-    private urlBase64ToUint8Array(base64String: string): Uint8Array {
+    private urlBase64ToUint8Array(base64String: string): BufferSource {
         const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
         const base64 = (base64String + padding)
             .replace(/-/g, "+")
