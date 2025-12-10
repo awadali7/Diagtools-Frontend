@@ -8,113 +8,133 @@ export default function AboutPage() {
             <section className="bg-gradient-to-br from-[#B00000] to-red-800 text-white py-20">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
                     <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6">
-                        About Diag Wheels
+                        ABOUT US
                     </h1>
                     <p className="text-xl sm:text-2xl text-gray-100 max-w-3xl mx-auto">
-                        Empowering automotive professionals with cutting-edge
-                        knowledge and skills
+                        India's Leading Provider of Advanced Automotive
+                        Diagnostic Solutions
                     </p>
                 </div>
             </section>
 
-            {/* Mission Section */}
+            {/* Main Content Section */}
             <section className="py-16 lg:py-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-                        <div>
-                            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-6">
-                                Our Mission
-                            </h2>
-                            <p className="text-lg text-slate-600 dark:text-slate-400 mb-4">
-                                Diag Wheels is dedicated to providing
-                                world-class automotive technology education to
-                                professionals and enthusiasts alike. We believe
-                                in making advanced diagnostic and repair
-                                knowledge accessible to everyone.
+                    <div className="max-w-4xl mx-auto">
+                        <div className="prose prose-lg max-w-none">
+                            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
+                                DiagTools is India's leading provider of
+                                advanced automotive diagnostic tools, key
+                                programming solutions, and specialized online
+                                training. We offer a complete range of services
+                                and products, including scanning and vehicle
+                                diagnosis, ECM repairing and programming, key
+                                and immobilizer (IMMO) programming, and meter
+                                repairing, calibration, and programming.
                             </p>
-                            <p className="text-lg text-slate-600 dark:text-slate-400 mb-4">
-                                Our platform offers comprehensive courses
-                                covering modern automotive systems including
-                                ADAS calibration, EV technology, diagnostic
-                                tools, and much more.
+                            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
+                                Our mission is to empower technicians,
+                                workshops, and automotive professionals with
+                                high-quality tools and practical,
+                                industry-focused training that meets the demands
+                                of modern vehicles. To ensure accessibility for
+                                learners across India, DiagTools provides
+                                training and support in multiple languages such
+                                as Malayalam, English, Tamil, and Hindi,
+                                delivered entirely through our flexible and
+                                user-friendly online platform.
                             </p>
-                            <p className="text-lg text-slate-600 dark:text-slate-400">
-                                We partner with industry experts and certified
-                                professionals to deliver hands-on training that
-                                prepares you for real-world challenges.
+                            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed">
+                                Backed by expert trainers with real-world
+                                experience, we combine technical excellence,
+                                reliable support, and multilingual learning to
+                                help technicians upgrade their skills, improve
+                                accuracy, and confidently tackle complex
+                                automotive electronic systems. With DiagTools,
+                                customers receive not just tools, but the
+                                knowledge and support needed to succeed in
+                                today's evolving automotive landscape.
                             </p>
-                        </div>
-                        <div className="bg-slate-50 dark:bg-slate-800 rounded-2xl p-8">
-                            <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                                What We Offer
-                            </h3>
-                            <div className="space-y-4">
-                                {[
-                                    "Expert-led video courses",
-                                    "Hands-on diagnostic training",
-                                    "Industry certifications",
-                                    "Live support and community",
-                                    "Latest technology updates",
-                                    "Practical case studies",
-                                ].map((item, index) => (
-                                    <div
-                                        key={index}
-                                        className="flex items-center space-x-3"
-                                    >
-                                        <div className="w-6 h-6 bg-[#B00000] rounded-full flex items-center justify-center flex-shrink-0">
-                                            <span className="text-white text-sm">
-                                                ✓
-                                            </span>
-                                        </div>
-                                        <span className="text-slate-700 dark:text-slate-300">
-                                            {item}
-                                        </span>
-                                    </div>
-                                ))}
-                            </div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            {/* Values Section */}
+            {/* Services Section */}
             <section className="py-16 lg:py-24 bg-slate-50 dark:bg-slate-800">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="text-center mb-12">
+                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+                            Our Services & Products
+                        </h2>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {[
+                            "Scanning and Vehicle Diagnosis",
+                            "ECM Repairing and Programming",
+                            "Key and Immobilizer (IMMO) Programming",
+                            "Meter Repairing, Calibration, and Programming",
+                            "Advanced Diagnostic Tools",
+                            "Specialized Online Training",
+                        ].map((item, index) => (
+                            <div
+                                key={index}
+                                className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm"
+                            >
+                                <div className="flex items-center space-x-3">
+                                    <div className="w-6 h-6 bg-[#B00000] rounded-full flex items-center justify-center flex-shrink-0">
+                                        <span className="text-white text-sm">
+                                            ✓
+                                        </span>
+                                    </div>
+                                    <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                        {item}
+                                    </span>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
+            {/* Features Section */}
+            <section className="py-16 lg:py-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
                         <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-                            Our Values
+                            Why Choose DiagTools
                         </h2>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
                             {
                                 icon: GraduationCap,
-                                title: "Excellence",
+                                title: "Expert Trainers",
                                 description:
-                                    "We strive for excellence in every course and training module",
+                                    "Backed by expert trainers with real-world experience",
                             },
                             {
                                 icon: Users,
-                                title: "Community",
+                                title: "Multilingual Support",
                                 description:
-                                    "Building a strong community of automotive professionals",
+                                    "Training in Malayalam, English, Tamil, and Hindi",
                             },
                             {
                                 icon: Award,
-                                title: "Quality",
+                                title: "Technical Excellence",
                                 description:
-                                    "High-quality content taught by industry experts",
+                                    "High-quality tools and industry-focused training",
                             },
                             {
                                 icon: BookOpen,
-                                title: "Innovation",
+                                title: "Online Platform",
                                 description:
-                                    "Staying ahead with the latest automotive technologies",
+                                    "Flexible and user-friendly online learning platform",
                             },
                         ].map((value, index) => (
                             <div
                                 key={index}
-                                className="bg-white dark:bg-slate-900 rounded-xl p-6 text-center"
+                                className="bg-white dark:bg-slate-900 rounded-xl p-6 text-center shadow-sm"
                             >
                                 <div className="w-16 h-16 bg-[#B00000] rounded-full flex items-center justify-center mx-auto mb-4">
                                     <value.icon className="w-8 h-8 text-white" />

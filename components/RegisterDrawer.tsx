@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { X, Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -150,9 +151,11 @@ export default function RegisterDrawer({
                 <div className="flex flex-col h-full">
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
-                        <h2 className="text-2xl font-bold text-slate-900">
-                            Create Account
-                        </h2>
+                        <div className="flex items-center space-x-4">
+                            <h2 className="text-2xl font-bold text-slate-900">
+                                Create Account
+                            </h2>
+                        </div>
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

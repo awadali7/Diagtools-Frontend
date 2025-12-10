@@ -7,8 +7,10 @@ import { useAuth } from "@/contexts/AuthContext";
 
 export default function MainContent({
     children,
+    className = "",
 }: {
     children: React.ReactNode;
+    className?: string;
 }) {
     const { isMinimized } = useSidebar();
     const pathname = usePathname();
@@ -29,7 +31,7 @@ export default function MainContent({
         <main
             className={`pt-[73px] min-h-screen transition-all duration-300 ${
                 showSidebar ? (isMinimized ? "lg:ml-20" : "lg:ml-72") : "ml-0"
-            }`}
+            } ${className}`}
         >
             {children}
         </main>

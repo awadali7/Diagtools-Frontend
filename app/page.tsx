@@ -53,16 +53,17 @@ export default function LandingPage() {
                                 <div className="absolute inset-0 bg-white/20 rounded-3xl blur-3xl"></div>
                                 <div className="relative bg-white/10 backdrop-blur-sm rounded-3xl p-8 border border-white/20 overflow-hidden">
                                     <div className="aspect-video rounded-xl overflow-hidden relative">
-                                        <Image
-                                            src="https://images.unsplash.com/photo-1486754735734-325b5831c3ad?w=800&h=450&fit=crop"
-                                            alt="Automotive technology training"
-                                            fill
-                                            className="object-cover"
-                                            sizes="(max-width: 1024px) 100vw, 50vw"
-                                        />
-                                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center z-10">
-                                            <Play className="w-16 h-16 text-white drop-shadow-lg" />
-                                        </div>
+                                        <iframe
+                                            width="560"
+                                            height="315"
+                                            src="https://www.youtube.com/embed/IIBU1v3Ae0E?si=_3Ifnu-vi2K5xSyq"
+                                            title="YouTube video player"
+                                            frameBorder="0"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                            referrerPolicy="strict-origin-when-cross-origin"
+                                            allowFullScreen
+                                            className="w-full h-full rounded-xl"
+                                        ></iframe>
                                     </div>
                                 </div>
                             </div>
@@ -86,25 +87,25 @@ export default function LandingPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         {[
                             {
-                                image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
+                                image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=300&fit=crop",
                                 title: "Expert Courses",
                                 description:
                                     "Comprehensive courses covering ADAS, EV systems, diagnostics, and more",
                             },
                             {
-                                image: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?w=400&h=300&fit=crop",
+                                image: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=400&h=300&fit=crop",
                                 title: "Learn from Experts",
                                 description:
                                     "Taught by certified automotive professionals with years of experience",
                             },
                             {
-                                image: "https://images.unsplash.com/photo-1587825140708-dfaf72ae4b04?w=400&h=300&fit=crop",
+                                image: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=400&h=300&fit=crop",
                                 title: "Certification",
                                 description:
                                     "Earn certificates upon completion to boost your career",
                             },
                             {
-                                image: "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=400&h=300&fit=crop",
+                                image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=300&fit=crop",
                                 title: "Video Tutorials",
                                 description:
                                     "Watch detailed video demonstrations and hands-on training",

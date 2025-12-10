@@ -2,8 +2,9 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { User, ChevronDown, GraduationCap, LogOut } from "lucide-react";
+import { User, ChevronDown, LogOut } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginDrawer from "./LoginDrawer";
 import RegisterDrawer from "./RegisterDrawer";
@@ -51,16 +52,15 @@ export default function Header() {
             <div className="flex items-center justify-between px-4 lg:px-8 py-4">
                 {/* Left Section - Logo */}
                 <Link href="/" className="flex items-center space-x-3 group">
-                    <div className="w-10 h-10 rounded-xl bg-[#B00000] flex items-center justify-center transition-all duration-300 transform group-hover:scale-110">
-                        <GraduationCap className="w-6 h-6 text-white" />
-                    </div>
-                    <div>
-                        <h1 className="text-xl font-bold text-black">
-                            Diag Wheels
-                        </h1>
-                        <p className="text-xs text-gray-600">
-                            Learn. Grow. Excel.
-                        </p>
+                    <div className="relative h-8 transition-all duration-300 transform group-hover:scale-105">
+                        <Image
+                            src="/images/logo/header-logo.png"
+                            alt="DIAGTOOLS"
+                            width={1000}
+                            height={1000}
+                            className="h-10 w-[50%] object-contain"
+                            priority
+                        />
                     </div>
                 </Link>
 

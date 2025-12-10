@@ -4,6 +4,7 @@ import localFont from "next/font/local";
 import "./globals.css";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import { SidebarProvider } from "@/components/SidebarContext";
 import MainContent from "@/components/MainContent";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -66,10 +67,13 @@ export default function RootLayout({
                 <AuthProvider>
                     <SidebarProvider>
                         <PushNotificationInitializer />
-                        <div className="min-h-screen bg-slate-50">
+                        <div className="min-h-screen bg-slate-50 flex flex-col">
                             <Header />
                             <ConditionalSidebar />
-                            <MainContent>{children}</MainContent>
+                            <MainContent className="flex-1">
+                                {children}
+                            </MainContent>
+                            <Footer />
                         </div>
                     </SidebarProvider>
                 </AuthProvider>

@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { X, Mail, Lock, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import ForgotPasswordDrawer from "./ForgotPasswordDrawer";
@@ -93,9 +94,11 @@ export default function LoginDrawer({
                 <div className="flex flex-col h-full">
                     {/* Header */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                        <h2 className="text-2xl font-bold text-slate-900">
-                            Sign In
-                        </h2>
+                        <div className="flex items-center space-x-4">
+                            <h2 className="text-2xl font-bold text-slate-900">
+                                Sign In
+                            </h2>
+                        </div>
                         <button
                             onClick={onClose}
                             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -218,7 +221,7 @@ export default function LoginDrawer({
                         {/* New User Section */}
                         <div className="mt-8 pt-8 border-t border-gray-200">
                             <p className="text-sm text-slate-600 text-center mb-4">
-                                New to Diag Wheels?
+                                New to DIAGTOOLS?
                             </p>
                             <button
                                 onClick={() => {
