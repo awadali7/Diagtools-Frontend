@@ -50,8 +50,82 @@ const onsetRegular = Inter({
 // });
 
 export const metadata: Metadata = {
-    title: "Diag Wheels - E-Learning Platform",
-    description: "Professional automotive technology e-learning platform",
+    title: {
+        default:
+            "DiagTools - India's Leading Automotive Diagnostic Training Platform",
+        template: "%s | DiagTools",
+    },
+    description:
+        "DiagTools is India's leading provider of advanced automotive diagnostic tools, key programming solutions, and specialized online training. Learn ECM repairing, IMMO programming, meter calibration, and more. Multilingual support in Malayalam, English, Tamil, and Hindi.",
+    keywords: [
+        "automotive diagnostic tools",
+        "key programming",
+        "ECM repairing",
+        "IMMO programming",
+        "meter calibration",
+        "automotive training",
+        "online courses",
+        "vehicle diagnosis",
+        "automotive technology",
+        "diagnostic equipment",
+        "India automotive training",
+        "multilingual training",
+    ],
+    authors: [{ name: "DiagTools" }],
+    creator: "DiagTools",
+    publisher: "DiagTools",
+    formatDetection: {
+        email: false,
+        address: false,
+        telephone: false,
+    },
+    metadataBase: new URL(
+        process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+    ),
+    alternates: {
+        canonical: "/",
+    },
+    openGraph: {
+        type: "website",
+        locale: "en_IN",
+        url: "/",
+        title: "DiagTools - India's Leading Automotive Diagnostic Training Platform",
+        description:
+            "Learn advanced automotive diagnostics, key programming, ECM repairing, and IMMO programming. Expert training in multiple languages including Malayalam, English, Tamil, and Hindi.",
+        siteName: "DiagTools",
+        images: [
+            {
+                url: "/images/logo/header-logo.png",
+                width: 1200,
+                height: 630,
+                alt: "DiagTools - Automotive Diagnostic Training",
+            },
+        ],
+    },
+    twitter: {
+        card: "summary_large_image",
+        title: "DiagTools - India's Leading Automotive Diagnostic Training",
+        description:
+            "Advanced automotive diagnostic tools, key programming, and specialized online training. Multilingual support available.",
+        images: ["/images/logo/header-logo.png"],
+    },
+    robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+            index: true,
+            follow: true,
+            "max-video-preview": -1,
+            "max-image-preview": "large",
+            "max-snippet": -1,
+        },
+    },
+    verification: {
+        // Add your verification codes here when available
+        // google: "your-google-verification-code",
+        // yandex: "your-yandex-verification-code",
+        // bing: "your-bing-verification-code",
+    },
 };
 
 export default function RootLayout({
@@ -60,7 +134,7 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en">
+        <html lang="en-IN">
             <body
                 className={`${bricolageGrotesque.variable} ${onsetRegular.variable} antialiased`}
             >
