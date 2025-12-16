@@ -84,9 +84,16 @@ class ApiClient {
     ): Promise<ApiResponse<T>> {
         const url = `${this.baseURL}${endpoint}`;
 
+        // Check if body is FormData - if so, use headers as-is (already set in post method)
+        const isFormData = options.body instanceof FormData;
+
         const config: RequestInit = {
             ...options,
-            headers: this.getHeaders(options.headers as Record<string, string>),
+            // If FormData, use headers from options (already set correctly in post method)
+            // Otherwise, merge with default headers
+            headers: isFormData
+                ? options.headers
+                : this.getHeaders(options.headers as Record<string, string>),
         };
 
         try {
@@ -191,14 +198,18 @@ class ApiClient {
         // Check if body is FormData
         const isFormData = body instanceof FormData;
 
-        // Don't set Content-Type for FormData, let browser set it with boundary
-        const headers = isFormData
-            ? { ...this.getHeaders() }
-            : this.getHeaders();
-
-        // Remove Content-Type from headers if FormData
+        // For FormData, don't set Content-Type - browser will set it with boundary
+        // Also don't include other headers that might interfere
+        let headers: HeadersInit;
         if (isFormData) {
-            delete (headers as any)["Content-Type"];
+            // Only include Authorization if token exists
+            const token = this.getToken();
+            headers = {};
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+        } else {
+            headers = this.getHeaders();
         }
 
         return this.fetch<T>(endpoint, {

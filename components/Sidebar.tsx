@@ -63,12 +63,12 @@ export default function Sidebar() {
             {/* Sidebar */}
             <aside
                 className={`
-          fixed top-[73px] left-0 z-30 h-[calc(100vh-73px)] bg-white dark:bg-slate-900
+          fixed top-[73px] left-0 z-30 h-[calc(100vh-73px)] bg-white
           transform transition-all duration-300 ease-in-out
           lg:translate-x-0
           ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
           ${isMinimized ? "w-20" : "w-72"}
-          border-r border-gray-200 dark:border-slate-700/50
+          border-r border-gray-200
         `}
             >
                 <div className="flex flex-col h-full">
@@ -111,7 +111,7 @@ export default function Sidebar() {
                 ${
                     isActive("/dashboard")
                         ? "bg-[#B00000] text-white"
-                        : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/50 hover:text-[#B00000] dark:hover:text-white"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-[#B00000]"
                 }
               `}
                             title={isMinimized ? "Dashboard" : ""}
@@ -146,7 +146,7 @@ export default function Sidebar() {
                 ${
                     isActive("/courses")
                         ? "bg-[#B00000] text-white"
-                        : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/50 hover:text-[#B00000] dark:hover:text-white"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-[#B00000]"
                 }
               `}
                             title={isMinimized ? "Courses" : ""}
@@ -181,7 +181,7 @@ export default function Sidebar() {
                 ${
                     isActive("/blog")
                         ? "bg-[#B00000] text-white"
-                        : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/50 hover:text-[#B00000] dark:hover:text-white"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-[#B00000]"
                 }
               `}
                             title={isMinimized ? "Blog" : ""}
@@ -216,7 +216,7 @@ export default function Sidebar() {
                 ${
                     isActive("/my-learning")
                         ? "bg-[#B00000] text-white"
-                        : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/50 hover:text-[#B00000] dark:hover:text-white"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-[#B00000]"
                 }
               `}
                             title={isMinimized ? "My Learning" : ""}
@@ -251,7 +251,7 @@ export default function Sidebar() {
                 ${
                     isActive("/settings")
                         ? "bg-[#B00000] text-white"
-                        : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/50 hover:text-[#B00000] dark:hover:text-white"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-[#B00000]"
                 }
               `}
                             title={isMinimized ? "Settings" : ""}
@@ -287,7 +287,7 @@ export default function Sidebar() {
                 ${
                     isActive("/admin")
                         ? "bg-[#B00000] text-white"
-                        : "text-gray-700 dark:text-slate-300 hover:bg-gray-100 dark:hover:bg-slate-800/50 hover:text-[#B00000] dark:hover:text-white"
+                        : "text-gray-700 hover:bg-gray-100 hover:text-[#B00000]"
                 }
               `}
                                 title={isMinimized ? "Admin" : ""}
@@ -310,14 +310,14 @@ export default function Sidebar() {
                     <div
                         className={`${
                             isMinimized ? "p-2" : "p-4"
-                        } border-t border-gray-200 dark:border-slate-700/50 transition-all duration-300`}
+                        } border-t border-gray-200 transition-all duration-300`}
                     >
                         <div
                             className={`flex items-center ${
                                 isMinimized ? "justify-center" : "space-x-3"
                             } ${
                                 isMinimized ? "px-2" : "px-3"
-                            } py-3 rounded-xl bg-gray-100 dark:bg-slate-800/50 hover:bg-gray-200 dark:hover:bg-slate-800 transition-all duration-300 cursor-pointer group`}
+                            } py-3 rounded-xl bg-gray-100 hover:bg-gray-200 transition-all duration-300 cursor-pointer group`}
                         >
                             <div className="w-10 h-10 rounded-full bg-[#B00000] flex items-center justify-center transition-all duration-300 shrink-0">
                                 <User className="w-5 h-5 text-white" />
@@ -329,15 +329,15 @@ export default function Sidebar() {
                                         : "opacity-100"
                                 }`}
                             >
-                                <p className="text-sm font-medium text-black dark:text-white">
+                                <p className="text-sm font-medium text-black">
                                     John Doe
                                 </p>
-                                <p className="text-xs text-gray-600 dark:text-slate-400">
+                                <p className="text-xs text-gray-600">
                                     john@example.com
                                 </p>
                             </div>
                             <ChevronRight
-                                className={`w-5 h-5 text-gray-600 dark:text-slate-400 group-hover:text-[#B00000] dark:group-hover:text-white transition-all duration-300 ${
+                                className={`w-5 h-5 text-gray-600 group-hover:text-[#B00000] transition-all duration-300 ${
                                     isMinimized
                                         ? "opacity-0 w-0 overflow-hidden"
                                         : "opacity-100"

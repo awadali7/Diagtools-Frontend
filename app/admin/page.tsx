@@ -1002,6 +1002,7 @@ export default function AdminPage() {
     };
 
     // Handle image upload for markdown editor
+    // Handle image upload (single)
     const handleImageUpload = async (file: File): Promise<string> => {
         try {
             setUploadingImage(true);
@@ -1019,7 +1020,44 @@ export default function AdminPage() {
         }
     };
 
-    // Handle document upload
+    // Handle multiple image uploads
+    const handleMultipleImageUpload = async (
+        files: File[]
+    ): Promise<string[]> => {
+        try {
+            setUploadingImage(true);
+
+            // Verify all files are valid File objects
+            const validFiles = files.filter((file) => file instanceof File);
+            if (validFiles.length !== files.length) {
+                throw new Error("Some files are invalid");
+            }
+
+            // Verify files have content
+            for (const file of validFiles) {
+                if (file.size === 0) {
+                    throw new Error(`File ${file.name} is empty`);
+                }
+            }
+
+            const response = await uploadsApi.uploadMultiple(
+                validFiles,
+                "blog"
+            );
+            if (response.success && response.data) {
+                return response.data.map((file) => file.url);
+            }
+            throw new Error("Failed to upload images");
+        } catch (error: any) {
+            console.error("Image upload error:", error);
+            setError(error.message || "Failed to upload images");
+            throw error;
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
+    // Handle document upload (single)
     const handleDocumentUpload = async (file: File): Promise<string> => {
         try {
             setUploadingDocument(true);
@@ -1031,6 +1069,43 @@ export default function AdminPage() {
         } catch (error: any) {
             console.error("Document upload error:", error);
             setError(error.message || "Failed to upload document");
+            throw error;
+        } finally {
+            setUploadingDocument(false);
+        }
+    };
+
+    // Handle multiple document uploads
+    const handleMultipleDocumentUpload = async (
+        files: File[]
+    ): Promise<string[]> => {
+        try {
+            setUploadingDocument(true);
+
+            // Verify all files are valid File objects
+            const validFiles = files.filter((file) => file instanceof File);
+            if (validFiles.length !== files.length) {
+                throw new Error("Some files are invalid");
+            }
+
+            // Verify files have content
+            for (const file of validFiles) {
+                if (file.size === 0) {
+                    throw new Error(`File ${file.name} is empty`);
+                }
+            }
+
+            const response = await uploadsApi.uploadMultiple(
+                validFiles,
+                "documents"
+            );
+            if (response.success && response.data) {
+                return response.data.map((file) => file.url);
+            }
+            throw new Error("Failed to upload documents");
+        } catch (error: any) {
+            console.error("Document upload error:", error);
+            setError(error.message || "Failed to upload documents");
             throw error;
         } finally {
             setUploadingDocument(false);
@@ -2657,24 +2732,61 @@ export default function AdminPage() {
                                                         <input
                                                             type="file"
                                                             accept="image/*"
+                                                            multiple
                                                             className="hidden"
                                                             onChange={async (
                                                                 e
                                                             ) => {
-                                                                const file =
-                                                                    e.target
-                                                                        .files?.[0];
-                                                                if (file) {
+                                                                const files =
+                                                                    Array.from(
+                                                                        e.target
+                                                                            .files ||
+                                                                            []
+                                                                    );
+                                                                if (
+                                                                    files.length >
+                                                                    0
+                                                                ) {
                                                                     try {
-                                                                        const imageUrl =
-                                                                            await handleImageUpload(
-                                                                                file
-                                                                            );
-                                                                        // Insert image markdown at cursor position
+                                                                        let imageUrls: string[] =
+                                                                            [];
+                                                                        if (
+                                                                            files.length ===
+                                                                            1
+                                                                        ) {
+                                                                            // Single image upload
+                                                                            const imageUrl =
+                                                                                await handleImageUpload(
+                                                                                    files[0]
+                                                                                );
+                                                                            imageUrls =
+                                                                                [
+                                                                                    imageUrl,
+                                                                                ];
+                                                                        } else {
+                                                                            // Multiple images upload
+                                                                            imageUrls =
+                                                                                await handleMultipleImageUpload(
+                                                                                    files
+                                                                                );
+                                                                        }
+                                                                        // Insert image markdown
                                                                         const currentContent =
                                                                             blogFormData.content ||
                                                                             "";
-                                                                        const imageMarkdown = `\n![${file.name}](${imageUrl})\n`;
+                                                                        const imageMarkdown =
+                                                                            imageUrls
+                                                                                .map(
+                                                                                    (
+                                                                                        url,
+                                                                                        index
+                                                                                    ) =>
+                                                                                        `\n![${files[index].name}](${url})`
+                                                                                )
+                                                                                .join(
+                                                                                    "\n"
+                                                                                ) +
+                                                                            "\n";
                                                                         setBlogFormData(
                                                                             {
                                                                                 ...blogFormData,
@@ -2684,7 +2796,7 @@ export default function AdminPage() {
                                                                             }
                                                                         );
                                                                     } catch (error) {
-                                                                        // Error already handled in handleImageUpload
+                                                                        // Error already handled in upload functions
                                                                     }
                                                                 }
                                                             }}
@@ -2695,24 +2807,61 @@ export default function AdminPage() {
                                                         <input
                                                             type="file"
                                                             accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                                                            multiple
                                                             className="hidden"
                                                             onChange={async (
                                                                 e
                                                             ) => {
-                                                                const file =
-                                                                    e.target
-                                                                        .files?.[0];
-                                                                if (file) {
+                                                                const files =
+                                                                    Array.from(
+                                                                        e.target
+                                                                            .files ||
+                                                                            []
+                                                                    );
+                                                                if (
+                                                                    files.length >
+                                                                    0
+                                                                ) {
                                                                     try {
-                                                                        const docUrl =
-                                                                            await handleDocumentUpload(
-                                                                                file
-                                                                            );
-                                                                        // Insert document link markdown
+                                                                        let docUrls: string[] =
+                                                                            [];
+                                                                        if (
+                                                                            files.length ===
+                                                                            1
+                                                                        ) {
+                                                                            // Single file upload
+                                                                            const docUrl =
+                                                                                await handleDocumentUpload(
+                                                                                    files[0]
+                                                                                );
+                                                                            docUrls =
+                                                                                [
+                                                                                    docUrl,
+                                                                                ];
+                                                                        } else {
+                                                                            // Multiple files upload
+                                                                            docUrls =
+                                                                                await handleMultipleDocumentUpload(
+                                                                                    files
+                                                                                );
+                                                                        }
+                                                                        // Insert document links markdown
                                                                         const currentContent =
                                                                             blogFormData.content ||
                                                                             "";
-                                                                        const docMarkdown = `\n[${file.name}](${docUrl})\n`;
+                                                                        const docMarkdown =
+                                                                            docUrls
+                                                                                .map(
+                                                                                    (
+                                                                                        url,
+                                                                                        index
+                                                                                    ) =>
+                                                                                        `\n[${files[index].name}](${url})`
+                                                                                )
+                                                                                .join(
+                                                                                    "\n"
+                                                                                ) +
+                                                                            "\n";
                                                                         setBlogFormData(
                                                                             {
                                                                                 ...blogFormData,
@@ -2722,7 +2871,7 @@ export default function AdminPage() {
                                                                             }
                                                                         );
                                                                     } catch (error) {
-                                                                        // Error already handled in handleDocumentUpload
+                                                                        // Error already handled in upload functions
                                                                     }
                                                                 }
                                                             }}
@@ -2730,15 +2879,15 @@ export default function AdminPage() {
                                                     </label>
                                                 </div>
                                             </div>
-                                            <div className="text-xs text-gray-500 bg-gray-50 dark:bg-gray-800 p-3 rounded-lg">
+                                            <div className="text-xs text-gray-500 bg-gray-50 p-3 rounded-lg">
                                                 <p className="font-medium mb-1">
                                                     💡 Tips:
                                                 </p>
-                                                <ul className="list-disc list-inside space-y-1 text-gray-600 dark:text-gray-400">
+                                                <ul className="list-disc list-inside space-y-1 text-gray-600">
                                                     <li>
                                                         <strong>Iframe:</strong>{" "}
                                                         Use HTML:{" "}
-                                                        <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">
+                                                        <code className="bg-gray-200 px-1 rounded">
                                                             &lt;iframe
                                                             src="URL"&gt;&lt;/iframe&gt;
                                                         </code>
@@ -2749,7 +2898,7 @@ export default function AdminPage() {
                                                         </strong>{" "}
                                                         Upload via API, then
                                                         link:{" "}
-                                                        <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">
+                                                        <code className="bg-gray-200 px-1 rounded">
                                                             [Document Name](URL)
                                                         </code>
                                                     </li>
@@ -2757,7 +2906,7 @@ export default function AdminPage() {
                                                         <strong>Images:</strong>{" "}
                                                         Click "Upload Image"
                                                         button or use:{" "}
-                                                        <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">
+                                                        <code className="bg-gray-200 px-1 rounded">
                                                             ![alt](URL)
                                                         </code>
                                                     </li>
@@ -2782,25 +2931,6 @@ export default function AdminPage() {
                                         formatting (bold, italic, headers,
                                         lists, links, etc.).
                                     </p>
-                                </div>
-
-                                {/* Cover Image */}
-                                <div>
-                                    <label className="block text-sm font-medium text-slate-900 mb-2">
-                                        Cover Image URL
-                                    </label>
-                                    <input
-                                        type="url"
-                                        value={blogFormData.cover_image}
-                                        onChange={(e) =>
-                                            setBlogFormData({
-                                                ...blogFormData,
-                                                cover_image: e.target.value,
-                                            })
-                                        }
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
-                                        placeholder="https://example.com/image.jpg"
-                                    />
                                 </div>
 
                                 {/* Published Status */}

@@ -109,7 +109,7 @@ export default function LandingPage() {
                             <div>
                                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
                                     Master Automotive Technology with{" "}
-                                    <span className="text-yellow-300">
+                                    <span className="text-white">
                                         DiagTools
                                     </span>
                                 </h1>
@@ -126,16 +126,16 @@ export default function LandingPage() {
                                         onClick={() =>
                                             setIsRegisterDrawerOpen(true)
                                         }
-                                        className="inline-flex items-center justify-center px-8 py-4 bg-white text-[#B00000] rounded-lg font-bold text-lg hover:bg-gray-100 transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:-translate-y-1"
+                                        className="inline-flex items-center justify-center px-6 py-3 bg-white text-[#B00000] rounded-lg font-semibold hover:bg-gray-50 transition-colors"
                                     >
                                         Join Now
-                                        <ArrowRight className="ml-2 w-5 h-5" />
+                                        <ArrowRight className="ml-2 w-4 h-4" />
                                     </button>
                                     <Link
                                         href="/courses"
-                                        className="inline-flex items-center justify-center px-8 py-4 bg-transparent border-2 border-white text-white rounded-lg font-bold text-lg hover:bg-white/10 transition-all duration-300"
+                                        className="inline-flex items-center justify-center px-6 py-3 bg-transparent border border-white text-white rounded-lg font-semibold hover:bg-white/10 transition-colors"
                                     >
-                                        <Play className="mr-2 w-5 h-5" />
+                                        <Play className="mr-2 w-4 h-4" />
                                         Explore Courses
                                     </Link>
                                 </div>
@@ -168,18 +168,18 @@ export default function LandingPage() {
                 {/* Features Section */}
                 <section className="py-16 lg:py-24 bg-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl font-bold text-slate-900 mb-4">
                                 Why Choose DiagTools?
                             </h2>
-                            <p className="text-xl text-slate-600 max-w-3xl mx-auto">
+                            <p className="text-lg text-slate-600 max-w-3xl mx-auto">
                                 Learn from industry experts with hands-on
                                 training in automotive diagnostics, ECM
                                 repairing, key programming, and IMMO
                                 programming. Multilingual support available.
                             </p>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                             {[
                                 {
                                     image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=300&fit=crop",
@@ -208,9 +208,9 @@ export default function LandingPage() {
                             ].map((feature, index) => (
                                 <div
                                     key={index}
-                                    className="bg-white rounded-xl overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-2 border border-gray-200"
+                                    className="bg-white rounded-lg overflow-hidden hover:shadow-md transition-all duration-200 border border-gray-200"
                                 >
-                                    <div className="h-48 w-full overflow-hidden relative">
+                                    <div className="h-40 w-full overflow-hidden relative">
                                         <Image
                                             src={feature.image}
                                             alt={`${feature.title} - ${feature.description}`}
@@ -220,11 +220,11 @@ export default function LandingPage() {
                                             loading="lazy"
                                         />
                                     </div>
-                                    <div className="p-6">
-                                        <h3 className="text-xl font-bold text-slate-900 mb-2">
+                                    <div className="p-5">
+                                        <h3 className="text-lg font-semibold text-slate-900 mb-2">
                                             {feature.title}
                                         </h3>
-                                        <p className="text-slate-600">
+                                        <p className="text-sm text-slate-600">
                                             {feature.description}
                                         </p>
                                     </div>
@@ -235,18 +235,18 @@ export default function LandingPage() {
                 </section>
 
                 {/* Courses Preview Section */}
-                <section className="py-16 lg:py-24 bg-[#0D121C]">
+                <section className="py-16 lg:py-24 bg-slate-50">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="text-center mb-16">
-                            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4">
+                        <div className="text-center mb-12">
+                            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
                                 Featured Courses
                             </h2>
-                            <p className="text-xl text-gray-200 max-w-3xl mx-auto">
+                            <p className="text-lg text-slate-600 max-w-3xl mx-auto">
                                 Master the latest automotive technologies and
                                 diagnostic techniques
                             </p>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                             {[
                                 {
                                     title: "ADAS Calibration",
@@ -270,9 +270,9 @@ export default function LandingPage() {
                                 <Link
                                     key={index}
                                     href="/courses"
-                                    className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 group"
+                                    className="bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden group"
                                 >
-                                    <div className="h-48 w-full overflow-hidden relative">
+                                    <div className="h-40 w-full overflow-hidden relative">
                                         <Image
                                             src={course.image}
                                             alt={`${course.title} - ${course.description}`}
@@ -282,14 +282,14 @@ export default function LandingPage() {
                                             loading="lazy"
                                         />
                                     </div>
-                                    <div className="p-6">
-                                        <h3 className="text-xl font-bold text-slate-900 mb-2 group-hover:text-[#B00000] transition-colors">
+                                    <div className="p-5">
+                                        <h3 className="text-lg font-semibold text-slate-900 mb-2 group-hover:text-[#B00000] transition-colors">
                                             {course.title}
                                         </h3>
-                                        <p className="text-slate-600 mb-4">
+                                        <p className="text-sm text-gray-600 mb-3 line-clamp-2">
                                             {course.description}
                                         </p>
-                                        <div className="flex items-center text-[#B00000] font-medium">
+                                        <div className="flex items-center text-[#B00000] text-sm font-medium">
                                             Learn More
                                             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                                         </div>
@@ -297,13 +297,13 @@ export default function LandingPage() {
                                 </Link>
                             ))}
                         </div>
-                        <div className="text-center mt-12">
+                        <div className="text-center mt-10">
                             <Link
                                 href="/courses"
-                                className="inline-flex items-center px-8 py-4 bg-[#B00000] text-white rounded-lg font-bold text-lg hover:bg-red-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+                                className="inline-flex items-center px-6 py-3 bg-[#B00000] text-white rounded-lg font-medium hover:bg-red-800 transition-colors"
                             >
                                 View All Courses
-                                <ArrowRight className="ml-2 w-5 h-5" />
+                                <ArrowRight className="ml-2 w-4 h-4" />
                             </Link>
                         </div>
                     </div>
@@ -312,7 +312,7 @@ export default function LandingPage() {
                 {/* Stats Section */}
                 <section className="py-16 lg:py-24 bg-[#B00000] text-white">
                     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center">
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
                             {[
                                 { value: "9+", label: "Expert Courses" },
                                 { value: "2.5K+", label: "Students Enrolled" },
@@ -320,10 +320,10 @@ export default function LandingPage() {
                                 { value: "50+", label: "Certified Experts" },
                             ].map((stat, index) => (
                                 <div key={index}>
-                                    <div className="text-4xl lg:text-5xl font-bold mb-2">
+                                    <div className="text-3xl lg:text-4xl font-bold mb-2">
                                         {stat.value}
                                     </div>
-                                    <div className="text-lg text-gray-200">
+                                    <div className="text-sm text-gray-100">
                                         {stat.label}
                                     </div>
                                 </div>
@@ -335,24 +335,24 @@ export default function LandingPage() {
                 {/* CTA Section */}
                 <section className="py-16 lg:py-24 bg-white">
                     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-                        <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-6">
+                        <h2 className="text-3xl font-bold text-slate-900 mb-4">
                             Ready to Start Learning?
                         </h2>
-                        <p className="text-xl text-slate-600 mb-8">
+                        <p className="text-lg text-slate-600 mb-8">
                             Join thousands of professionals mastering automotive
                             technology today
                         </p>
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <button
                                 onClick={() => setIsRegisterDrawerOpen(true)}
-                                className="inline-flex items-center justify-center px-8 py-4 bg-[#B00000] text-white rounded-lg font-bold text-lg hover:bg-red-800 transition-all duration-300 shadow-lg hover:shadow-xl"
+                                className="inline-flex items-center justify-center px-6 py-3 bg-[#B00000] text-white rounded-lg font-medium hover:bg-red-800 transition-colors"
                             >
                                 Join Now - It's Free
-                                <ArrowRight className="ml-2 w-5 h-5" />
+                                <ArrowRight className="ml-2 w-4 h-4" />
                             </button>
                             <Link
                                 href="/courses"
-                                className="inline-flex items-center justify-center px-8 py-4 bg-slate-200 text-slate-900 rounded-lg font-bold text-lg hover:bg-slate-300 transition-all duration-300"
+                                className="inline-flex items-center justify-center px-6 py-3 bg-gray-100 text-slate-900 rounded-lg font-medium hover:bg-gray-200 transition-colors"
                             >
                                 Browse Courses
                             </Link>

@@ -107,12 +107,12 @@ export default function DashboardPage() {
     if (!isAuth) {
         return (
             <>
-                <div className="flex items-center justify-center min-h-screen bg-gray-50 dark:bg-slate-900">
+                <div className="flex items-center justify-center min-h-screen bg-gray-50">
                     <div className="text-center">
-                        <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                        <h1 className="text-2xl font-bold text-slate-900 mb-2">
                             Welcome to Diag Wheels
                         </h1>
-                        <p className="text-gray-600 dark:text-gray-400">
+                        <p className="text-gray-600">
                             Please sign in to continue
                         </p>
                     </div>
@@ -156,23 +156,23 @@ export default function DashboardPage() {
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="mb-6">
-                        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
+                        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">
                             Admin Dashboard
                         </h1>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                        <p className="text-sm text-slate-600 mt-1">
                             Business overview and performance metrics
                         </p>
                     </div>
 
                     {/* Tabs */}
-                    <div className="mb-4 border-b border-gray-200 dark:border-gray-700">
+                    <div className="mb-4 border-b border-gray-200">
                         <div className="flex space-x-6">
                             <button
                                 onClick={() => setActiveTab("overview")}
                                 className={`pb-2 text-sm font-medium border-b-2 transition-colors ${
                                     activeTab === "overview"
                                         ? "border-[#B00000] text-[#B00000]"
-                                        : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                        : "border-transparent text-gray-600 hover:text-gray-900"
                                 }`}
                             >
                                 Business Overview
@@ -182,7 +182,7 @@ export default function DashboardPage() {
                                 className={`pb-2 text-sm font-medium border-b-2 transition-colors ${
                                     activeTab === "performance"
                                         ? "border-[#B00000] text-[#B00000]"
-                                        : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                                        : "border-transparent text-gray-600 hover:text-gray-900"
                                 }`}
                             >
                                 Performance
@@ -195,13 +195,13 @@ export default function DashboardPage() {
                         <>
                             {/* Statistics Cards */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                                <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                            <p className="text-xs text-gray-500 mb-1">
                                                 Users
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                            <p className="text-2xl font-bold text-slate-900">
                                                 {
                                                     adminDashboard
                                                         .business_overview
@@ -212,13 +212,13 @@ export default function DashboardPage() {
                                         <Users className="w-8 h-8 text-blue-500 opacity-60" />
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                            <p className="text-xs text-gray-500 mb-1">
                                                 Courses
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                            <p className="text-2xl font-bold text-slate-900">
                                                 {
                                                     adminDashboard
                                                         .business_overview
@@ -230,13 +230,13 @@ export default function DashboardPage() {
                                         <BookOpen className="w-8 h-8 text-green-500 opacity-60" />
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                            <p className="text-xs text-gray-500 mb-1">
                                                 Pending
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                            <p className="text-2xl font-bold text-slate-900">
                                                 {
                                                     adminDashboard
                                                         .business_overview
@@ -248,13 +248,13 @@ export default function DashboardPage() {
                                         <AlertCircle className="w-8 h-8 text-yellow-500 opacity-60" />
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                            <p className="text-xs text-gray-500 mb-1">
                                                 Active
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                            <p className="text-2xl font-bold text-slate-900">
                                                 {
                                                     adminDashboard
                                                         .business_overview
@@ -269,8 +269,8 @@ export default function DashboardPage() {
                             </div>
 
                             {/* Recent Requests */}
-                            <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4 mb-4">
-                                <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+                                <h2 className="text-sm font-semibold text-slate-900 mb-3">
                                     Recent Requests
                                 </h2>
                                 <div className="space-y-2">
@@ -281,14 +281,14 @@ export default function DashboardPage() {
                                             .map((request) => (
                                                 <div
                                                     key={request.id}
-                                                    className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-slate-700/50 rounded text-sm"
+                                                    className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded text-sm"
                                                 >
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="font-medium text-slate-900 dark:text-white truncate">
+                                                        <p className="font-medium text-slate-900 truncate">
                                                             {request.first_name}{" "}
                                                             {request.last_name}
                                                         </p>
-                                                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                        <p className="text-xs text-gray-500 truncate">
                                                             {
                                                                 request.course_name
                                                             }
@@ -298,11 +298,11 @@ export default function DashboardPage() {
                                                         className={`ml-2 px-2 py-0.5 rounded text-xs font-medium shrink-0 ${
                                                             request.status ===
                                                             "pending"
-                                                                ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
+                                                                ? "bg-yellow-100 text-yellow-700"
                                                                 : request.status ===
                                                                   "approved"
-                                                                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                                                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                                                ? "bg-green-100 text-green-700"
+                                                                : "bg-red-100 text-red-700"
                                                         }`}
                                                     >
                                                         {request.status}
@@ -324,13 +324,13 @@ export default function DashboardPage() {
                         <>
                             {/* Performance Stats */}
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-                                <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                            <p className="text-xs text-gray-500 mb-1">
                                                 Courses
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                            <p className="text-2xl font-bold text-slate-900">
                                                 {
                                                     adminDashboard
                                                         .admin_performance
@@ -341,13 +341,13 @@ export default function DashboardPage() {
                                         <BookOpen className="w-8 h-8 text-blue-500 opacity-60" />
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                            <p className="text-xs text-gray-500 mb-1">
                                                 Watched
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                            <p className="text-2xl font-bold text-slate-900">
                                                 {
                                                     adminDashboard
                                                         .admin_performance
@@ -358,13 +358,13 @@ export default function DashboardPage() {
                                         <Video className="w-8 h-8 text-green-500 opacity-60" />
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                            <p className="text-xs text-gray-500 mb-1">
                                                 Completion
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                            <p className="text-2xl font-bold text-slate-900">
                                                 {
                                                     adminDashboard
                                                         .admin_performance
@@ -376,13 +376,13 @@ export default function DashboardPage() {
                                         <TrendingUp className="w-8 h-8 text-purple-500 opacity-60" />
                                     </div>
                                 </div>
-                                <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
+                                <div className="bg-white rounded-lg border border-gray-200 p-4">
                                     <div className="flex items-center justify-between">
                                         <div>
-                                            <p className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                                            <p className="text-xs text-gray-500 mb-1">
                                                 Total Videos
                                             </p>
-                                            <p className="text-2xl font-bold text-slate-900 dark:text-white">
+                                            <p className="text-2xl font-bold text-slate-900">
                                                 {
                                                     adminDashboard
                                                         .admin_performance
@@ -400,8 +400,8 @@ export default function DashboardPage() {
                     {/* Notifications & Current Video - Side by Side */}
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                         {/* Notifications */}
-                        <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
-                            <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center">
+                        <div className="bg-white rounded-lg border border-gray-200 p-4">
+                            <h2 className="text-sm font-semibold text-slate-900 mb-3 flex items-center">
                                 <Bell className="w-4 h-4 mr-1.5" />
                                 Notifications
                             </h2>
@@ -412,14 +412,14 @@ export default function DashboardPage() {
                                         .map((notif, index) => (
                                             <div
                                                 key={index}
-                                                className="flex items-start py-2 px-3 bg-gray-50 dark:bg-slate-700/50 rounded text-sm"
+                                                className="flex items-start py-2 px-3 bg-gray-50 rounded text-sm"
                                             >
                                                 <AlertCircle className="w-4 h-4 text-yellow-500 mr-2 mt-0.5 shrink-0" />
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="text-xs font-medium text-slate-900 dark:text-white line-clamp-2">
+                                                    <p className="text-xs font-medium text-slate-900 line-clamp-2">
                                                         {notif.message}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                    <p className="text-xs text-gray-500 mt-0.5">
                                                         {formatDate(
                                                             notif.created_at ||
                                                                 notif.expires_at ||
@@ -439,16 +439,16 @@ export default function DashboardPage() {
 
                         {/* Currently Watching Video */}
                         {adminDashboard.current_video && (
-                            <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
-                                <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center">
+                            <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                <h2 className="text-sm font-semibold text-slate-900 mb-3 flex items-center">
                                     <Play className="w-4 h-4 mr-1.5" />
                                     Currently Watching
                                 </h2>
-                                <div className="bg-gray-50 dark:bg-slate-700/50 rounded p-3">
-                                    <p className="text-sm font-medium text-slate-900 dark:text-white mb-1 line-clamp-1">
+                                <div className="bg-gray-50 rounded p-3">
+                                    <p className="text-sm font-medium text-slate-900 mb-1 line-clamp-1">
                                         {adminDashboard.current_video.title}
                                     </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                    <p className="text-xs text-gray-500 mb-2">
                                         {
                                             adminDashboard.current_video
                                                 .course_name
@@ -467,8 +467,8 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Latest Videos */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
-                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h2 className="text-sm font-semibold text-slate-900 mb-3">
                             Latest Videos
                         </h2>
                         <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -479,13 +479,13 @@ export default function DashboardPage() {
                                         <Link
                                             key={video.id}
                                             href={`/courses/${video.course_slug}`}
-                                            className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-slate-700/50 rounded hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors text-sm"
+                                            className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors text-sm"
                                         >
                                             <div className="flex-1 min-w-0">
-                                                <p className="font-medium text-slate-900 dark:text-white truncate">
+                                                <p className="font-medium text-slate-900 truncate">
                                                     {video.title}
                                                 </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                <p className="text-xs text-gray-500 truncate">
                                                     {video.course_name}
                                                 </p>
                                             </div>
@@ -511,10 +511,10 @@ export default function DashboardPage() {
                 <div className="max-w-7xl mx-auto">
                     {/* Header */}
                     <div className="mb-6">
-                        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900 dark:text-white">
+                        <h1 className="text-2xl lg:text-3xl font-bold text-slate-900">
                             Welcome back, {user?.first_name}! 👋
                         </h1>
-                        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                        <p className="text-sm text-slate-600 mt-1">
                             Continue your learning journey
                         </p>
                     </div>
@@ -589,16 +589,16 @@ export default function DashboardPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
                         {/* Currently Watching Video */}
                         {userDashboard.current_video && (
-                            <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
-                                <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center">
+                            <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                <h2 className="text-sm font-semibold text-slate-900 mb-3 flex items-center">
                                     <Play className="w-4 h-4 mr-1.5" />
                                     Continue Watching
                                 </h2>
-                                <div className="bg-gray-50 dark:bg-slate-700/50 rounded p-3">
-                                    <p className="text-sm font-medium text-slate-900 dark:text-white mb-1 line-clamp-1">
+                                <div className="bg-gray-50 rounded p-3">
+                                    <p className="text-sm font-medium text-slate-900 mb-1 line-clamp-1">
                                         {userDashboard.current_video.title}
                                     </p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">
+                                    <p className="text-xs text-gray-500 mb-2">
                                         {
                                             userDashboard.current_video
                                                 .course_name
@@ -617,8 +617,8 @@ export default function DashboardPage() {
 
                         {/* Notifications */}
                         {userDashboard.notifications.length > 0 && (
-                            <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
-                                <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3 flex items-center">
+                            <div className="bg-white rounded-lg border border-gray-200 p-4">
+                                <h2 className="text-sm font-semibold text-slate-900 mb-3 flex items-center">
                                     <Bell className="w-4 h-4 mr-1.5" />
                                     Notifications
                                 </h2>
@@ -628,12 +628,12 @@ export default function DashboardPage() {
                                         .map((notif) => (
                                             <div
                                                 key={notif.id}
-                                                className="py-2 px-3 bg-gray-50 dark:bg-slate-700/50 rounded text-sm"
+                                                className="py-2 px-3 bg-gray-50 rounded text-sm"
                                             >
-                                                <p className="text-xs font-medium text-slate-900 dark:text-white line-clamp-2">
+                                                <p className="text-xs font-medium text-slate-900 line-clamp-2">
                                                     {notif.message}
                                                 </p>
-                                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                                                <p className="text-xs text-gray-500 mt-0.5">
                                                     {formatDate(
                                                         notif.created_at
                                                     )}
@@ -646,8 +646,8 @@ export default function DashboardPage() {
                     </div>
 
                     {/* My Courses */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4 mb-4">
-                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <div className="bg-white rounded-lg border border-gray-200 p-4 mb-4">
+                        <h2 className="text-sm font-semibold text-slate-900 mb-3">
                             My Courses
                         </h2>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -656,20 +656,20 @@ export default function DashboardPage() {
                                     <Link
                                         key={course.id}
                                         href={`/courses/${course.slug}`}
-                                        className="bg-gray-50 dark:bg-slate-700/50 rounded-lg p-3 hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors"
+                                        className="bg-gray-50 rounded-lg p-3 hover:bg-gray-100 transition-colors"
                                     >
-                                        <h3 className="text-sm font-medium text-slate-900 dark:text-white mb-2 line-clamp-1">
+                                        <h3 className="text-sm font-medium text-slate-900 mb-2 line-clamp-1">
                                             {course.name}
                                         </h3>
                                         <div className="mb-2">
-                                            <div className="flex items-center justify-between text-xs text-gray-600 dark:text-gray-400 mb-1">
+                                            <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
                                                 <span>Progress</span>
                                                 <span className="font-semibold">
                                                     {course.progress.percentage}
                                                     %
                                                 </span>
                                             </div>
-                                            <div className="w-full bg-gray-200 dark:bg-slate-600 rounded-full h-1.5">
+                                            <div className="w-full bg-gray-200 rounded-full h-1.5">
                                                 <div
                                                     className="bg-[#B00000] h-1.5 rounded-full transition-all"
                                                     style={{
@@ -678,7 +678,7 @@ export default function DashboardPage() {
                                                 ></div>
                                             </div>
                                         </div>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        <p className="text-xs text-gray-500">
                                             {course.progress.watched} /{" "}
                                             {course.progress.total} videos
                                         </p>
@@ -699,8 +699,8 @@ export default function DashboardPage() {
                     </div>
 
                     {/* Latest Videos */}
-                    <div className="bg-white dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700 p-4">
-                        <h2 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                    <div className="bg-white rounded-lg border border-gray-200 p-4">
+                        <h2 className="text-sm font-semibold text-slate-900 mb-3">
                             Latest Videos
                         </h2>
                         <div className="space-y-2 max-h-64 overflow-y-auto">
@@ -711,17 +711,17 @@ export default function DashboardPage() {
                                         <Link
                                             key={video.id}
                                             href={`/courses/${video.course_slug}`}
-                                            className="flex items-center justify-between py-2 px-3 bg-gray-50 dark:bg-slate-700/50 rounded hover:bg-gray-100 dark:hover:bg-slate-600 transition-colors text-sm"
+                                            className="flex items-center justify-between py-2 px-3 bg-gray-50 rounded hover:bg-gray-100 transition-colors text-sm"
                                         >
                                             <div className="flex items-center flex-1 min-w-0">
                                                 {video.is_watched && (
                                                     <CheckCircle className="w-4 h-4 text-green-500 mr-2 shrink-0" />
                                                 )}
                                                 <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-slate-900 dark:text-white truncate">
+                                                    <p className="font-medium text-slate-900 truncate">
                                                         {video.title}
                                                     </p>
-                                                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                                    <p className="text-xs text-gray-500 truncate">
                                                         {video.course_name}
                                                     </p>
                                                 </div>

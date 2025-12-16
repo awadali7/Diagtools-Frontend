@@ -706,11 +706,11 @@ export default function CourseDetailPage() {
                                 {(currentVideo.markdown ||
                                     currentVideo.markdown_content ||
                                     (currentVideo as any).markdown) && (
-                                    <div className="border-t border-gray-200 dark:border-slate-700 pt-4 mt-4">
-                                        <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-3">
+                                    <div className="border-t border-gray-200 pt-4 mt-4">
+                                        <h4 className="text-sm font-semibold text-slate-900 mb-3">
                                             Course Notes & Details
                                         </h4>
-                                        <div className="markdown-content text-sm sm:text-base text-gray-700 dark:text-gray-300 leading-relaxed">
+                                        <div className="markdown-content text-sm sm:text-base text-gray-700 leading-relaxed">
                                             {(() => {
                                                 let markdownText =
                                                     currentVideo.markdown ||
@@ -740,7 +740,7 @@ export default function CourseDetailPage() {
                                                         elements.push(
                                                             <h1
                                                                 key={i}
-                                                                className="text-xl font-bold text-slate-900 dark:text-white mt-6 mb-3"
+                                                                className="text-xl font-bold text-slate-900 mt-6 mb-3"
                                                             >
                                                                 {line.substring(
                                                                     2
@@ -754,7 +754,7 @@ export default function CourseDetailPage() {
                                                         elements.push(
                                                             <h2
                                                                 key={i}
-                                                                className="text-lg font-bold text-slate-900 dark:text-white mt-4 mb-2"
+                                                                className="text-lg font-bold text-slate-900 mt-4 mb-2"
                                                             >
                                                                 {line.substring(
                                                                     3
@@ -768,7 +768,7 @@ export default function CourseDetailPage() {
                                                         elements.push(
                                                             <h3
                                                                 key={i}
-                                                                className="text-base font-semibold text-slate-900 dark:text-white mt-3 mb-2"
+                                                                className="text-base font-semibold text-slate-900 mt-3 mb-2"
                                                             >
                                                                 {line.substring(
                                                                     4
@@ -786,7 +786,7 @@ export default function CourseDetailPage() {
                                                         elements.push(
                                                             <hr
                                                                 key={i}
-                                                                className="my-4 border-gray-300 dark:border-slate-600"
+                                                                className="my-4 border-gray-300"
                                                             />
                                                         );
                                                         i++;

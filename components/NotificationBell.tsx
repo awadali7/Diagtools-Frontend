@@ -123,10 +123,10 @@ export default function NotificationBell() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-slate-800 rounded-lg shadow-xl border border-gray-200 dark:border-slate-700 z-50 max-h-96 overflow-hidden flex flex-col">
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-96 overflow-hidden flex flex-col">
                     {/* Header */}
-                    <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-slate-700">
-                        <h3 className="text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="flex items-center justify-between p-4 border-b border-gray-200">
+                        <h3 className="text-lg font-semibold text-slate-900">
                             Notifications
                         </h3>
                         <div className="flex items-center space-x-2">
@@ -141,9 +141,9 @@ export default function NotificationBell() {
                             )}
                             <button
                                 onClick={() => setIsOpen(false)}
-                                className="p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded"
+                                className="p-1 hover:bg-gray-100 rounded"
                             >
-                                <X className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+                                <X className="w-4 h-4 text-gray-600" />
                             </button>
                         </div>
                     </div>
@@ -151,12 +151,12 @@ export default function NotificationBell() {
                     {/* Notifications List */}
                     <div className="overflow-y-auto flex-1">
                         {notifications.length === 0 ? (
-                            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+                            <div className="p-8 text-center text-gray-500">
                                 <Bell className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                 <p className="text-sm">No notifications</p>
                             </div>
                         ) : (
-                            <div className="divide-y divide-gray-200 dark:divide-slate-700">
+                            <div className="divide-y divide-gray-200">
                                 {notifications.map((notification) => (
                                     <Link
                                         key={notification.id}
@@ -169,9 +169,9 @@ export default function NotificationBell() {
                                             }
                                             setIsOpen(false);
                                         }}
-                                        className={`block p-4 hover:bg-gray-50 dark:hover:bg-slate-700/50 transition-colors ${
+                                        className={`block p-4 hover:bg-gray-50 transition-colors ${
                                             !notification.is_read
-                                                ? "bg-blue-50 dark:bg-blue-900/20"
+                                                ? "bg-blue-50"
                                                 : ""
                                         }`}
                                     >
@@ -181,8 +181,8 @@ export default function NotificationBell() {
                                                     <p
                                                         className={`text-sm font-medium ${
                                                             !notification.is_read
-                                                                ? "text-slate-900 dark:text-white"
-                                                                : "text-gray-700 dark:text-gray-300"
+                                                                ? "text-slate-900"
+                                                                : "text-gray-700"
                                                         }`}
                                                     >
                                                         {notification.title}
@@ -191,10 +191,10 @@ export default function NotificationBell() {
                                                         <span className="w-2 h-2 bg-[#B00000] rounded-full shrink-0"></span>
                                                     )}
                                                 </div>
-                                                <p className="text-xs text-gray-600 dark:text-gray-400 line-clamp-2">
+                                                <p className="text-xs text-gray-600 line-clamp-2">
                                                     {notification.message}
                                                 </p>
-                                                <p className="text-xs text-gray-400 dark:text-gray-500 mt-1">
+                                                <p className="text-xs text-gray-400 mt-1">
                                                     {new Date(
                                                         notification.created_at
                                                     ).toLocaleDateString()}
@@ -209,7 +209,7 @@ export default function NotificationBell() {
 
                     {/* Footer */}
                     {notifications.length > 0 && (
-                        <div className="p-3 border-t border-gray-200 dark:border-slate-700 text-center">
+                        <div className="p-3 border-t border-gray-200 text-center">
                             <Link
                                 href="/dashboard"
                                 onClick={() => setIsOpen(false)}

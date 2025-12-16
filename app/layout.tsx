@@ -8,9 +8,11 @@ import Footer from "@/components/Footer";
 import { SidebarProvider } from "@/components/SidebarContext";
 import MainContent from "@/components/MainContent";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CartProvider } from "@/contexts/CartContext";
 import ConditionalSidebar from "@/components/ConditionalSidebar";
 import PushNotificationInitializer from "@/components/PushNotificationInitializer";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
+import ShoppingCart from "@/components/ShoppingCart";
 
 // Bricolage Grotesque for headings
 const bricolageGrotesque = Bricolage_Grotesque({
@@ -146,18 +148,21 @@ export default function RootLayout({
                 className={`${bricolageGrotesque.variable} ${onsetRegular.variable} antialiased`}
             >
                 <AuthProvider>
-                    <SidebarProvider>
-                        <PushNotificationInitializer />
-                        <div className="min-h-screen bg-slate-50 flex flex-col">
-                            <Header />
-                            <ConditionalSidebar />
-                            <MainContent className="flex-1">
-                                {children}
-                            </MainContent>
-                            <Footer />
-                            <WhatsAppFloatingButton />
-                        </div>
-                    </SidebarProvider>
+                    <CartProvider>
+                        <SidebarProvider>
+                            <PushNotificationInitializer />
+                            <div className="min-h-screen bg-slate-50 flex flex-col">
+                                <Header />
+                                <ConditionalSidebar />
+                                <MainContent className="flex-1">
+                                    {children}
+                                </MainContent>
+                                <Footer />
+                                <WhatsAppFloatingButton />
+                                <ShoppingCart />
+                            </div>
+                        </SidebarProvider>
+                    </CartProvider>
                 </AuthProvider>
             </body>
         </html>

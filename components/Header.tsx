@@ -4,8 +4,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { User, ChevronDown, LogOut } from "lucide-react";
+import { User, ChevronDown, LogOut, ShoppingCart } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCart } from "@/contexts/CartContext";
 import LoginDrawer from "./LoginDrawer";
 import RegisterDrawer from "./RegisterDrawer";
 import NotificationBell from "./NotificationBell";
@@ -14,6 +15,7 @@ export default function Header() {
     const router = useRouter();
     const pathname = usePathname();
     const { user, isAuth, logout, loading } = useAuth();
+    const { getItemCount, setIsOpen } = useCart();
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
     const [isRegisterDrawerOpen, setIsRegisterDrawerOpen] = useState(false);
@@ -68,6 +70,14 @@ export default function Header() {
                 {isPublicPage && !isAuth && (
                     <nav className="hidden lg:flex items-center space-x-8">
                         <Link
+                            href="/"
+                            className={`text-gray-700 hover:text-[#B00000] font-medium transition-colors ${
+                                pathname === "/" ? "text-[#B00000]" : ""
+                            }`}
+                        >
+                            Home
+                        </Link>
+                        <Link
                             href="/about"
                             className={`text-gray-700 hover:text-[#B00000] font-medium transition-colors ${
                                 pathname === "/about" ? "text-[#B00000]" : ""
@@ -104,6 +114,19 @@ export default function Header() {
 
                 {/* Right Section - Auth Buttons or User Profile */}
                 <div className="flex items-center space-x-4">
+                    {/* Shopping Cart */}
+                    <button
+                        onClick={() => setIsOpen(true)}
+                        className="relative p-2 text-gray-700 hover:text-[#B00000] transition-colors"
+                        aria-label="Shopping Cart"
+                    >
+                        <ShoppingCart className="w-5 h-5" />
+                        {getItemCount() > 0 && (
+                            <span className="absolute -top-1 -right-1 w-5 h-5 bg-[#B00000] text-white text-xs font-bold rounded-full flex items-center justify-center">
+                                {getItemCount() > 9 ? "9+" : getItemCount()}
+                            </span>
+                        )}
+                    </button>
                     {/* Notification Bell */}
                     {isAuth && <NotificationBell />}
                     {loading ? (

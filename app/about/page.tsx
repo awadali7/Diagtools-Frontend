@@ -22,7 +22,7 @@ export default function AboutPage() {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="max-w-4xl mx-auto">
                         <div className="prose prose-lg max-w-none">
-                            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
+                            <p className="text-lg text-slate-700 leading-relaxed mb-6">
                                 DiagTools is India's leading provider of
                                 advanced automotive diagnostic tools, key
                                 programming solutions, and specialized online
@@ -32,7 +32,7 @@ export default function AboutPage() {
                                 and immobilizer (IMMO) programming, and meter
                                 repairing, calibration, and programming.
                             </p>
-                            <p className="text-lg text-slate-700 dark:text-slate-300 leading-relaxed mb-6">
+                            <p className="text-lg text-slate-700 leading-relaxed mb-6">
                                 Our mission is to empower technicians,
                                 workshops, and automotive professionals with
                                 high-quality tools and practical,
@@ -61,10 +61,10 @@ export default function AboutPage() {
             </section>
 
             {/* Services Section */}
-            <section className="py-16 lg:py-24 bg-slate-50 dark:bg-slate-800">
+            <section className="py-16 lg:py-24 bg-slate-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-12">
-                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
                             Our Services & Products
                         </h2>
                     </div>
@@ -79,15 +79,15 @@ export default function AboutPage() {
                         ].map((item, index) => (
                             <div
                                 key={index}
-                                className="bg-white dark:bg-slate-900 rounded-xl p-6 shadow-sm"
+                                className="bg-white rounded-xl p-6 shadow-sm"
                             >
                                 <div className="flex items-center space-x-3">
-                                    <div className="w-6 h-6 bg-[#B00000] rounded-full flex items-center justify-center flex-shrink-0">
+                                    <div className="w-6 h-6 bg-[#B00000] rounded-full flex items-center justify-center shrink-0">
                                         <span className="text-white text-sm">
                                             ✓
                                         </span>
                                     </div>
-                                    <span className="text-slate-700 dark:text-slate-300 font-medium">
+                                    <span className="text-slate-700 font-medium">
                                         {item}
                                     </span>
                                 </div>
@@ -101,7 +101,7 @@ export default function AboutPage() {
             <section className="py-16 lg:py-24">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="text-center mb-16">
-                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+                        <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 mb-4">
                             Why Choose DiagTools
                         </h2>
                     </div>
@@ -134,15 +134,15 @@ export default function AboutPage() {
                         ].map((value, index) => (
                             <div
                                 key={index}
-                                className="bg-white dark:bg-slate-900 rounded-xl p-6 text-center shadow-sm"
+                                className="bg-white rounded-xl p-6 text-center shadow-sm"
                             >
                                 <div className="w-16 h-16 bg-[#B00000] rounded-full flex items-center justify-center mx-auto mb-4">
                                     <value.icon className="w-8 h-8 text-white" />
                                 </div>
-                                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">
+                                <h3 className="text-xl font-bold text-slate-900 mb-2">
                                     {value.title}
                                 </h3>
-                                <p className="text-slate-600 dark:text-slate-400">
+                                <p className="text-slate-600">
                                     {value.description}
                                 </p>
                             </div>

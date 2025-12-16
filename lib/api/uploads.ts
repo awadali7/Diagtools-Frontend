@@ -17,8 +17,12 @@ export const uploadsApi = {
         file: File,
         type: "images" | "documents" | "blog" = "images"
     ): Promise<ApiResponse<UploadedFile>> => {
+        if (!(file instanceof File)) {
+            throw new Error(`Invalid file object: ${file}`);
+        }
+
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", file, file.name);
         formData.append("type", type);
 
         // Don't set Content-Type header - let browser set it with boundary
@@ -31,8 +35,14 @@ export const uploadsApi = {
         type: "images" | "documents" | "blog" = "images"
     ): Promise<ApiResponse<UploadedFile[]>> => {
         const formData = new FormData();
+
+        // Ensure all files are valid File objects
         files.forEach((file) => {
-            formData.append("files", file);
+            if (file instanceof File) {
+                formData.append("files", file, file.name);
+            } else {
+                throw new Error(`Invalid file object: ${file}`);
+            }
         });
         formData.append("type", type);
 
