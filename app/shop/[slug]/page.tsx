@@ -1,195 +1,183 @@
 "use client";
 
-import React, { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useEffect, useMemo, useState } from "react";
+import { useParams } from "next/navigation";
 import Link from "next/link";
-import {
-    ArrowLeft,
-    Star,
-    ShoppingCart,
-    Package,
-    Download,
-    Play,
-} from "lucide-react";
+import { ArrowLeft, Download, Package, ShoppingCart, Star } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { productsApi } from "@/lib/api/products";
+import type { Product } from "@/lib/api/types";
 
-// Mock product data - Replace with API call later
-const getProductBySlug = (slug: string) => {
-    const products = [
-        {
-            id: "1",
-            name: "Professional OBD-II Scanner",
-            slug: "obd-ii-scanner",
-            price: 12999,
-            image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&h=600&fit=crop",
-            category: "Diagnostic Tools",
-            type: "physical" as const,
-            rating: 4.5,
-            reviews: 24,
-            inStock: true,
-            description:
-                "Professional-grade OBD-II scanner with advanced diagnostic capabilities. Compatible with all vehicles manufactured after 1996. Features include real-time data streaming, freeze frame data, and comprehensive code reading.",
-            specifications: [
-                "Compatible with OBD-II protocols",
-                "Real-time data streaming",
-                "Freeze frame data capture",
-                "Code reading and clearing",
-                "Works with all vehicles post-1996",
-            ],
-            features: [
-                "Large color display",
-                "Wireless connectivity",
-                "Regular firmware updates",
-                "1-year warranty",
-            ],
-        },
-        {
-            id: "2",
-            name: "Key Programming Tool Kit",
-            slug: "key-programming-kit",
-            price: 8999,
-            image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&h=600&fit=crop",
-            category: "Key Programming Tools",
-            type: "physical" as const,
-            rating: 4.6,
-            reviews: 18,
-            inStock: true,
-            description:
-                "Complete key programming tool kit for automotive key cutting and programming. Includes all necessary tools and software for modern vehicle key programming.",
-            specifications: [
-                "Universal key programmer",
-                "Key cutting machine",
-                "Software included",
-                "Compatible with major brands",
-            ],
-            features: [
-                "Easy to use interface",
-                "Regular software updates",
-                "Technical support",
-                "6-month warranty",
-            ],
-        },
-        {
-            id: "3",
-            name: "ECM Programming Device",
-            slug: "ecm-programming-device",
-            price: 15999,
-            image: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=800&h=600&fit=crop",
-            category: "ECM Tools",
-            type: "physical" as const,
-            rating: 4.9,
-            reviews: 32,
-            inStock: true,
-            description:
-                "Advanced ECM (Engine Control Module) programming device for reading, writing, and repairing engine control modules. Supports multiple vehicle makes and models.",
-            specifications: [
-                "Multi-protocol support",
-                "High-speed programming",
-                "Backup and restore functions",
-                "Compatible with 1000+ ECM models",
-            ],
-            features: [
-                "User-friendly software",
-                "Regular database updates",
-                "Expert technical support",
-                "1-year warranty",
-            ],
-        },
-        {
-            id: "4",
-            name: "ADAS Calibration Equipment",
-            slug: "adas-calibration-equipment",
-            price: 24999,
-            image: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=800&h=600&fit=crop",
-            category: "ADAS Equipment",
-            type: "physical" as const,
-            rating: 4.7,
-            reviews: 21,
-            inStock: true,
-            description:
-                "Professional ADAS (Advanced Driver Assistance Systems) calibration equipment for accurate sensor alignment and calibration. Essential for modern vehicle service.",
-            specifications: [
-                "Laser alignment system",
-                "Target boards included",
-                "Software calibration tools",
-                "Works with all ADAS systems",
-            ],
-            features: [
-                "Precision calibration",
-                "Step-by-step guidance",
-                "Regular updates",
-                "2-year warranty",
-            ],
-        },
-        {
-            id: "5",
-            name: "IMMO Programming Tool",
-            slug: "immo-programming-tool",
-            price: 11999,
-            image: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=800&h=600&fit=crop",
-            category: "IMMO Tools",
-            type: "physical" as const,
-            rating: 4.8,
-            reviews: 28,
-            inStock: true,
-            description:
-                "Immobilizer (IMMO) programming tool for key programming and immobilizer system management. Supports various vehicle brands and models.",
-            specifications: [
-                "IMMO code reading",
-                "Key programming",
-                "ECU programming",
-                "Multi-brand support",
-            ],
-            features: [
-                "Easy operation",
-                "Regular updates",
-                "Technical support",
-                "1-year warranty",
-            ],
-        },
-        {
-            id: "6",
-            name: "Meter Calibration Device",
-            slug: "meter-calibration-device",
-            price: 6999,
-            image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&h=600&fit=crop",
-            category: "Calibration Tools",
-            type: "physical" as const,
-            rating: 4.6,
-            reviews: 15,
-            inStock: true,
-            description:
-                "Precision meter calibration device for speedometer, odometer, and other vehicle meter calibration. Ensures accurate readings and compliance.",
-            specifications: [
-                "Multi-meter support",
-                "High precision",
-                "Easy calibration process",
-                "Portable design",
-            ],
-            features: [
-                "User-friendly interface",
-                "Regular updates",
-                "Support included",
-                "6-month warranty",
-            ],
-        },
-    ];
-    return products.find((p) => p.slug === slug);
+type ProductType = "physical" | "digital";
+type DigitalFileFormat = "zip" | "rar";
+
+type ShopProductDetails = {
+    id: string;
+    name: string;
+    slug: string;
+    price: number;
+    image: string;
+    category: string;
+    type: ProductType;
+    rating: number;
+    reviews: number;
+    inStock?: boolean; // physical only
+    description: string;
+    digitalFile?: {
+        format?: DigitalFileFormat;
+        filename?: string;
+    };
 };
+
+const FALLBACK_IMAGE =
+    "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=800&h=600&fit=crop";
+
+function mapApiProductToDetails(p: Product): ShopProductDetails {
+    return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        price: Number(p.price),
+        image: p.cover_image || FALLBACK_IMAGE,
+        category: p.category || "Other",
+        type: p.type,
+        rating: Number(p.rating ?? 0),
+        reviews: Number(p.reviews_count ?? 0),
+        inStock:
+            p.type === "digital"
+                ? true
+                : p.in_stock ?? (p.stock_quantity ?? 0) > 0,
+        description:
+            p.description ||
+            (p.type === "digital"
+                ? "Digital product. Download available after payment."
+                : "Physical product. Shipping available."),
+        digitalFile:
+            p.type === "digital"
+                ? {
+                      format: p.digital_file_format || undefined,
+                      filename: p.digital_file_name || undefined,
+                  }
+                : undefined,
+    };
+}
 
 export default function ProductDetailPage() {
     const params = useParams();
-    const router = useRouter();
     const slug = params.slug as string;
-    const product = getProductBySlug(slug);
     const { addToCart } = useCart();
+
+    const [product, setProduct] = useState<ShopProductDetails | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [quantity, setQuantity] = useState(1);
 
-    if (!product) {
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const resp = await productsApi.getBySlug(slug);
+                if (!mounted) return;
+                if (!resp.success || !resp.data) {
+                    setError("Product not found");
+                    setProduct(null);
+                    return;
+                }
+                setProduct(mapApiProductToDetails(resp.data));
+            } catch (e: any) {
+                if (!mounted) return;
+                setError(e?.message || "Failed to load product");
+                setProduct(null);
+            } finally {
+                if (!mounted) return;
+                setLoading(false);
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, [slug]);
+
+    const specifications = useMemo(() => {
+        if (!product) return [];
+        if (product.type === "digital") {
+            return [
+                "Instant download after payment",
+                `Format: ${
+                    product.digitalFile?.format?.toUpperCase() || "DIGITAL"
+                }`,
+                product.digitalFile?.filename
+                    ? `File: ${product.digitalFile.filename}`
+                    : "File provided after purchase",
+                "Access available in My Downloads",
+            ];
+        }
+        return [
+            "Shipping available",
+            product.inStock ? "In stock" : "Out of stock",
+            "Ships after payment confirmation",
+        ];
+    }, [product]);
+
+    const features = useMemo(() => {
+        if (!product) return [];
+        if (product.type === "digital") {
+            return [
+                "Secure download link",
+                "Access from any device after login",
+                "Admin can grant free access",
+            ];
+        }
+        return ["Quality checked", "Fast shipping", "Support available"];
+    }, [product]);
+
+    const handleAddToCart = () => {
+        if (!product) return;
+        const finalQty = product.type === "digital" ? 1 : quantity;
+        const isPhysicalInStock =
+            product.type !== "physical" ? true : !!product.inStock;
+        if (!isPhysicalInStock) return;
+
+        addToCart({
+            id: product.id,
+            name: product.name,
+            price: product.price,
+            image: product.image,
+            type: product.type,
+            quantity: finalQty,
+            slug: product.slug,
+        });
+    };
+
+    if (loading) {
+        return (
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                <div className="bg-white rounded-lg border border-gray-200 p-8 animate-pulse">
+                    <div className="h-6 w-40 bg-gray-100 rounded mb-4" />
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div className="h-96 bg-gray-100 rounded-lg" />
+                        <div className="space-y-4">
+                            <div className="h-4 w-32 bg-gray-100 rounded" />
+                            <div className="h-8 w-3/4 bg-gray-100 rounded" />
+                            <div className="h-10 w-40 bg-gray-100 rounded" />
+                            <div className="h-24 bg-gray-100 rounded" />
+                            <div className="h-12 bg-gray-100 rounded" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (error || !product) {
         return (
             <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                    <p className="text-sm text-red-600">Product not found</p>
+                    <p className="text-sm text-red-600">
+                        {error || "Product not found"}
+                    </p>
                 </div>
                 <Link
                     href="/shop"
@@ -201,18 +189,6 @@ export default function ProductDetailPage() {
             </div>
         );
     }
-
-    const handleAddToCart = () => {
-        addToCart({
-            id: product.id,
-            name: product.name,
-            price: product.price,
-            image: product.image,
-            type: product.type,
-            quantity: quantity,
-            slug: product.slug,
-        });
-    };
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -270,7 +246,12 @@ export default function ProductDetailPage() {
                                 ₹{product.price.toLocaleString()}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
-                                {product.inStock
+                                {product.type === "digital"
+                                    ? `Instant download (${
+                                          product.digitalFile?.format?.toUpperCase() ||
+                                          "DIGITAL"
+                                      }) after payment`
+                                    : product.inStock
                                     ? "In Stock - Ready to Ship"
                                     : "Out of Stock"}
                             </p>
@@ -281,41 +262,69 @@ export default function ProductDetailPage() {
                             {product.description}
                         </p>
 
-                        {/* Quantity */}
-                        <div className="mb-6">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Quantity
-                            </label>
-                            <div className="flex items-center space-x-3">
-                                <button
-                                    onClick={() =>
-                                        setQuantity(Math.max(1, quantity - 1))
-                                    }
-                                    className="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50"
-                                >
-                                    -
-                                </button>
-                                <span className="w-12 text-center font-medium">
-                                    {quantity}
-                                </span>
-                                <button
-                                    onClick={() => setQuantity(quantity + 1)}
-                                    className="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50"
-                                >
-                                    +
-                                </button>
+                        {/* Quantity / Delivery */}
+                        {product.type === "digital" ? (
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Delivery
+                                </label>
+                                <div className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                                    <Download className="w-5 h-5 text-[#B00000] mt-0.5 shrink-0" />
+                                    <div>
+                                        <p className="text-sm font-medium text-slate-900">
+                                            Digital download
+                                        </p>
+                                        <p className="text-xs text-gray-600 mt-1">
+                                            Available after payment (or admin
+                                            grant)
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="mb-6">
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Quantity
+                                </label>
+                                <div className="flex items-center space-x-3">
+                                    <button
+                                        onClick={() =>
+                                            setQuantity(
+                                                Math.max(1, quantity - 1)
+                                            )
+                                        }
+                                        className="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                    >
+                                        -
+                                    </button>
+                                    <span className="w-12 text-center font-medium">
+                                        {quantity}
+                                    </span>
+                                    <button
+                                        onClick={() =>
+                                            setQuantity(quantity + 1)
+                                        }
+                                        className="w-10 h-10 border border-gray-300 rounded-lg hover:bg-gray-50"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Add to Cart Button */}
                         <button
                             onClick={handleAddToCart}
-                            disabled={!product.inStock}
+                            disabled={
+                                product.type === "physical" && !product.inStock
+                            }
                             className="w-full px-6 py-3 bg-[#B00000] text-white rounded-lg font-medium hover:bg-red-800 transition-colors flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <ShoppingCart className="w-5 h-5" />
                             <span>
-                                {product.inStock
+                                {product.type === "digital"
+                                    ? "Add Digital Product"
+                                    : product.inStock
                                     ? "Add to Cart"
                                     : "Out of Stock"}
                             </span>
@@ -324,16 +333,23 @@ export default function ProductDetailPage() {
                         {/* Stock Status */}
                         <div className="pt-4 border-t border-gray-200">
                             <div className="flex items-center space-x-2">
-                                {product.inStock ? (
+                                {product.type === "digital" ? (
                                     <>
-                                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                        <div className="w-3 h-3 bg-blue-500 rounded-full" />
+                                        <span className="text-sm text-gray-600">
+                                            Available after payment
+                                        </span>
+                                    </>
+                                ) : product.inStock ? (
+                                    <>
+                                        <div className="w-3 h-3 bg-green-500 rounded-full" />
                                         <span className="text-sm text-gray-600">
                                             In Stock
                                         </span>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                        <div className="w-3 h-3 bg-red-500 rounded-full" />
                                         <span className="text-sm text-gray-600">
                                             Out of Stock
                                         </span>
@@ -347,36 +363,42 @@ export default function ProductDetailPage() {
 
             {/* Specifications and Features */}
             <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Specifications */}
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <h2 className="text-xl font-semibold text-slate-900 mb-4">
                         Specifications
                     </h2>
                     <ul className="space-y-2">
-                        {product.specifications.map((spec, index) => (
+                        {specifications.map((spec, index) => (
                             <li
                                 key={index}
                                 className="flex items-start space-x-2"
                             >
-                                <Package className="w-5 h-5 text-[#B00000] mt-0.5 shrink-0" />
+                                {product.type === "digital" ? (
+                                    <Download className="w-5 h-5 text-[#B00000] mt-0.5 shrink-0" />
+                                ) : (
+                                    <Package className="w-5 h-5 text-[#B00000] mt-0.5 shrink-0" />
+                                )}
                                 <span className="text-gray-600">{spec}</span>
                             </li>
                         ))}
                     </ul>
                 </div>
 
-                {/* Features */}
                 <div className="bg-white rounded-lg border border-gray-200 p-6">
                     <h2 className="text-xl font-semibold text-slate-900 mb-4">
                         Features
                     </h2>
                     <ul className="space-y-2">
-                        {product.features.map((feature, index) => (
+                        {features.map((feature, index) => (
                             <li
                                 key={index}
                                 className="flex items-start space-x-2"
                             >
-                                <Star className="w-5 h-5 text-[#B00000] mt-0.5 shrink-0" />
+                                {product.type === "digital" ? (
+                                    <Download className="w-5 h-5 text-[#B00000] mt-0.5 shrink-0" />
+                                ) : (
+                                    <Star className="w-5 h-5 text-[#B00000] mt-0.5 shrink-0" />
+                                )}
                                 <span className="text-gray-600">{feature}</span>
                             </li>
                         ))}

@@ -134,4 +134,13 @@ export const adminApi = {
         const query = isActive !== undefined ? `?is_active=${isActive}` : "";
         return apiClient.get<any[]>(`/admin/announcements${query}`);
     },
+
+    // Grant digital product to a user for free (Admin only)
+    grantProductEntitlement: async (data: {
+        user_id: string;
+        product_id: string;
+        note?: string;
+    }): Promise<ApiResponse<any>> => {
+        return apiClient.post<any>("/admin/product-entitlements/grant", data);
+    },
 };

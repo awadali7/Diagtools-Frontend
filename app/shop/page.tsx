@@ -1,139 +1,115 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { Package, Star, Search, Filter } from "lucide-react";
+import { Download, Package, Star, Search, Truck, X } from "lucide-react";
 import { useCart } from "@/contexts/CartContext";
+import { productsApi } from "@/lib/api/products";
+import type { Product } from "@/lib/api/types";
 
-// Mock product data - Replace with API call later
-const mockProducts = [
-    {
-        id: "1",
-        name: "Professional OBD-II Scanner",
-        slug: "obd-ii-scanner",
-        price: 12999,
-        image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&h=400&fit=crop",
-        category: "Diagnostic Tools",
-        type: "physical" as const,
-        rating: 4.5,
-        reviews: 24,
-        inStock: true,
-    },
-    {
-        id: "2",
-        name: "Key Programming Tool Kit",
-        slug: "key-programming-kit",
-        price: 8999,
-        image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&h=400&fit=crop",
-        category: "Key Programming Tools",
-        type: "physical" as const,
-        rating: 4.6,
-        reviews: 18,
-        inStock: true,
-    },
-    {
-        id: "3",
-        name: "ECM Programming Device",
-        slug: "ecm-programming-device",
-        price: 15999,
-        image: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=600&h=400&fit=crop",
-        category: "ECM Tools",
-        type: "physical" as const,
-        rating: 4.9,
-        reviews: 32,
-        inStock: true,
-    },
-    {
-        id: "4",
-        name: "ADAS Calibration Equipment",
-        slug: "adas-calibration-equipment",
-        price: 24999,
-        image: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&h=400&fit=crop",
-        category: "ADAS Equipment",
-        type: "physical" as const,
-        rating: 4.7,
-        reviews: 21,
-        inStock: true,
-    },
-    {
-        id: "5",
-        name: "IMMO Programming Tool",
-        slug: "immo-programming-tool",
-        price: 11999,
-        image: "https://images.unsplash.com/photo-1605559424843-9e4c228bf1c2?w=600&h=400&fit=crop",
-        category: "IMMO Tools",
-        type: "physical" as const,
-        rating: 4.8,
-        reviews: 28,
-        inStock: true,
-    },
-    {
-        id: "6",
-        name: "Meter Calibration Device",
-        slug: "meter-calibration-device",
-        price: 6999,
-        image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&h=400&fit=crop",
-        category: "Calibration Tools",
-        type: "physical" as const,
-        rating: 4.6,
-        reviews: 15,
-        inStock: true,
-    },
-    {
-        id: "7",
-        name: "EV Diagnostic Scanner",
-        slug: "ev-diagnostic-scanner",
-        price: 18999,
-        image: "https://images.unsplash.com/photo-1619642751034-765dfdf7c58e?w=600&h=400&fit=crop",
-        category: "EV Tools",
-        type: "physical" as const,
-        rating: 4.9,
-        reviews: 19,
-        inStock: true,
-    },
-    {
-        id: "8",
-        name: "TPMS Service Tool",
-        slug: "tpms-service-tool",
-        price: 5499,
-        image: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&h=400&fit=crop",
-        category: "TPMS Tools",
-        type: "physical" as const,
-        rating: 4.5,
-        reviews: 22,
-        inStock: true,
-    },
-];
+type ProductType = "physical" | "digital";
+type DigitalFileFormat = "zip" | "rar";
 
-const categories = [
-    "All",
-    "Diagnostic Tools",
-    "Key Programming Tools",
-    "ECM Tools",
-    "ADAS Equipment",
-    "IMMO Tools",
-    "Calibration Tools",
-    "EV Tools",
-    "TPMS Tools",
-];
+type ShopProduct = {
+    id: string;
+    name: string;
+    slug: string;
+    price: number;
+    image: string;
+    category: string;
+    type: ProductType;
+    rating: number;
+    reviews: number;
+    inStock?: boolean; // physical only
+    digitalFile?: {
+        format?: DigitalFileFormat;
+        filename?: string;
+    };
+};
+
+const FALLBACK_IMAGE =
+    "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=600&h=400&fit=crop";
+
+function mapApiProductToShopProduct(p: Product): ShopProduct {
+    return {
+        id: p.id,
+        name: p.name,
+        slug: p.slug,
+        price: Number(p.price),
+        image: p.cover_image || FALLBACK_IMAGE,
+        category: p.category || "Other",
+        type: p.type,
+        rating: Number(p.rating ?? 0),
+        reviews: Number(p.reviews_count ?? 0),
+        inStock:
+            p.type === "digital"
+                ? true
+                : p.in_stock ?? (p.stock_quantity ?? 0) > 0,
+        digitalFile:
+            p.type === "digital"
+                ? {
+                      format: p.digital_file_format || undefined,
+                      filename: p.digital_file_name || undefined,
+                  }
+                : undefined,
+    };
+}
 
 export default function ShopPage() {
+    const [products, setProducts] = useState<ShopProduct[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [selectedCategory, setSelectedCategory] = useState("All");
     const [searchQuery, setSearchQuery] = useState("");
-    const [showFilters, setShowFilters] = useState(false);
     const { addToCart } = useCart();
 
-    const filteredProducts = mockProducts.filter((product) => {
-        const matchesCategory =
-            selectedCategory === "All" || product.category === selectedCategory;
-        const matchesSearch =
-            product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            product.category.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesCategory && matchesSearch;
-    });
+    const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    const handleAddToCart = (product: (typeof mockProducts)[0]) => {
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                setLoading(true);
+                setError(null);
+                const resp = await productsApi.list();
+                if (!mounted) return;
+                const list = Array.isArray(resp.data) ? resp.data : [];
+                setProducts(list.map(mapApiProductToShopProduct));
+            } catch (e: any) {
+                if (!mounted) return;
+                setError(e?.message || "Failed to load products");
+            } finally {
+                if (!mounted) return;
+                setLoading(false);
+            }
+        })();
+        return () => {
+            mounted = false;
+        };
+    }, []);
+
+    const categories = useMemo(() => {
+        return ["All", ...Array.from(new Set(products.map((p) => p.category)))];
+    }, [products]);
+
+    const filteredProducts = useMemo(() => {
+        return products.filter((product) => {
+            const matchesCategory =
+                selectedCategory === "All" ||
+                product.category === selectedCategory;
+            const matchesSearch =
+                normalizedQuery.length === 0 ||
+                product.name.toLowerCase().includes(normalizedQuery) ||
+                product.category.toLowerCase().includes(normalizedQuery);
+            return matchesCategory && matchesSearch;
+        });
+    }, [normalizedQuery, products, selectedCategory]);
+
+    const handleAddToCart = (product: ShopProduct) => {
+        const isPhysicalInStock =
+            product.type !== "physical" ? true : !!product.inStock;
+        if (!isPhysicalInStock) return;
+
         addToCart({
             id: product.id,
             name: product.name,
@@ -148,48 +124,134 @@ export default function ShopPage() {
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             {/* Header */}
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-slate-900 mb-2">Shop</h1>
-                <p className="text-slate-600">
-                    Professional diagnostic tools and equipment for automotive
-                    professionals
-                </p>
+            <div className="mb-5 flex items-center justify-between gap-4">
+                <h1 className="text-3xl font-bold text-slate-900">Shop</h1>
+                <div className="text-sm text-gray-500 whitespace-nowrap">
+                    {filteredProducts.length}{" "}
+                    {filteredProducts.length === 1 ? "item" : "items"}
+                </div>
             </div>
 
             {/* Search and Filters */}
-            <div className="mb-6 space-y-4">
-                {/* Search Bar */}
-                <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                        type="text"
-                        placeholder="Search products..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
-                    />
+            <div className="mb-6 space-y-2">
+                {/* Search + Reset */}
+                <div className="flex flex-col md:flex-row md:items-center gap-3">
+                    <div className="relative flex-1 md:max-w-xl">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <input
+                            type="search"
+                            placeholder="Search by name or category…"
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="w-full h-11 pl-10 pr-9 text-sm bg-white border border-gray-200 rounded-xl shadow-sm focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
+                        />
+                        {searchQuery.trim().length > 0 && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchQuery("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 inline-flex items-center justify-center rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-700"
+                                aria-label="Clear search"
+                            >
+                                <X className="w-4 h-4" />
+                            </button>
+                        )}
+                    </div>
+
+                    {(selectedCategory !== "All" ||
+                        searchQuery.trim().length > 0) && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setSelectedCategory("All");
+                                setSearchQuery("");
+                            }}
+                            className="w-full md:w-auto inline-flex items-center justify-center gap-2 px-4 h-11 rounded-xl border border-gray-200 bg-white shadow-sm hover:bg-gray-50 text-sm font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#B00000] focus:ring-offset-2"
+                        >
+                            <X className="w-4 h-4 text-gray-500" />
+                            Reset
+                        </button>
+                    )}
                 </div>
 
-                {/* Category Filters */}
-                <div className="flex flex-wrap items-center gap-2">
-                    {categories.map((category) => (
-                        <button
-                            key={category}
-                            onClick={() => setSelectedCategory(category)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                selectedCategory === category
-                                    ? "bg-[#B00000] text-white"
-                                    : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
-                            }`}
+                {/* Mobile: dropdown only */}
+                <div className="md:hidden">
+                    <div className="relative">
+                        <select
+                            value={selectedCategory}
+                            onChange={(e) =>
+                                setSelectedCategory(e.target.value)
+                            }
+                            className="w-full appearance-none px-4 h-11 bg-white border border-gray-200 rounded-xl text-sm font-semibold text-slate-900 focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
                         >
-                            {category}
-                        </button>
-                    ))}
+                            {categories.map((category) => {
+                                const label =
+                                    category === "All"
+                                        ? "All Categories"
+                                        : category;
+                                return (
+                                    <option key={category} value={category}>
+                                        {label}
+                                    </option>
+                                );
+                            })}
+                        </select>
+                        <div className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                            ▾
+                        </div>
+                    </div>
+                </div>
+
+                {/* Desktop: pills only (wrap to avoid cut-off) */}
+                <div className="hidden md:flex flex-wrap gap-2">
+                    {categories.map((category) => {
+                        const isActive = selectedCategory === category;
+                        const label = category === "All" ? "All" : category;
+                        return (
+                            <button
+                                key={category}
+                                type="button"
+                                onClick={() => setSelectedCategory(category)}
+                                className={`px-4 py-2 rounded-full text-sm font-semibold border transition-colors ${
+                                    isActive
+                                        ? "bg-[#B00000] text-white border-[#B00000]"
+                                        : "bg-white text-gray-700 border-gray-200 hover:bg-gray-50"
+                                }`}
+                            >
+                                {label}
+                            </button>
+                        );
+                    })}
                 </div>
             </div>
 
             {/* Products Grid */}
-            {filteredProducts.length === 0 ? (
+            {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-600">{error}</p>
+                </div>
+            )}
+
+            {loading ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {Array.from({ length: 6 }).map((_, idx) => (
+                        <div
+                            key={idx}
+                            className="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse"
+                        >
+                            <div className="h-48 w-full bg-gray-100" />
+                            <div className="p-5 space-y-3">
+                                <div className="h-4 w-28 bg-gray-100 rounded" />
+                                <div className="h-5 w-3/4 bg-gray-100 rounded" />
+                                <div className="h-4 w-24 bg-gray-100 rounded" />
+                                <div className="pt-4 border-t border-gray-100 flex items-center justify-between">
+                                    <div className="h-6 w-24 bg-gray-100 rounded" />
+                                    <div className="h-9 w-28 bg-gray-100 rounded-lg" />
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            ) : filteredProducts.length === 0 ? (
                 <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
                     <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600">No products found</p>
@@ -214,9 +276,28 @@ export default function ShopPage() {
 
                             {/* Product Info */}
                             <div className="p-5">
-                                <div className="mb-2">
+                                <div className="mb-3 flex items-center justify-between gap-3">
                                     <span className="text-xs text-gray-500">
                                         {product.category}
+                                    </span>
+                                    <span
+                                        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border ${
+                                            product.type === "digital"
+                                                ? "bg-blue-50 text-blue-700 border-blue-200"
+                                                : "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        }`}
+                                    >
+                                        {product.type === "digital" ? (
+                                            <Download className="w-3 h-3" />
+                                        ) : (
+                                            <Truck className="w-3 h-3" />
+                                        )}
+                                        {product.type === "digital"
+                                            ? `${
+                                                  product.digitalFile?.format?.toUpperCase() ||
+                                                  "DIGITAL"
+                                              }`
+                                            : "SHIPPING"}
                                     </span>
                                 </div>
                                 <Link href={`/shop/${product.slug}`}>
@@ -240,14 +321,19 @@ export default function ShopPage() {
                                             ₹{product.price.toLocaleString()}
                                         </p>
                                         <p className="text-xs text-gray-500">
-                                            {product.inStock
+                                            {product.type === "digital"
+                                                ? "Instant download after purchase"
+                                                : product.inStock
                                                 ? "In Stock"
                                                 : "Out of Stock"}
                                         </p>
                                     </div>
                                     <button
                                         onClick={() => handleAddToCart(product)}
-                                        disabled={!product.inStock}
+                                        disabled={
+                                            product.type === "physical" &&
+                                            !product.inStock
+                                        }
                                         className="px-4 py-2 bg-[#B00000] text-white rounded-lg text-sm font-medium hover:bg-red-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                                     >
                                         Add to Cart

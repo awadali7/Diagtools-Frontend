@@ -363,3 +363,115 @@ export interface KYCVerification {
     user_last_name?: string;
     verifier_email?: string;
 }
+
+// =========================
+// Shop / Products / Orders
+// =========================
+
+export type ProductType = "physical" | "digital";
+export type DigitalFileFormat = "zip" | "rar";
+
+export interface Product {
+    id: string;
+    name: string;
+    slug: string;
+    description?: string;
+    price: number;
+    category?: string | null;
+    // Backend returns product_type + we also include a friendlier `type`
+    product_type?: ProductType;
+    type: ProductType;
+    cover_image?: string | null;
+
+    // Digital product fields
+    digital_file_name?: string | null;
+    digital_file_format?: DigitalFileFormat | null;
+
+    // Physical product fields
+    stock_quantity?: number | null;
+
+    // Convenience
+    in_stock?: boolean;
+
+    rating?: number;
+    reviews_count?: number;
+    is_active?: boolean;
+    created_at?: string;
+    updated_at?: string;
+}
+
+export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded";
+
+export interface CreateOrderItem {
+    product_id: string;
+    quantity: number;
+}
+
+export interface CreateOrderRequest {
+    items: CreateOrderItem[];
+    customer?: {
+        first_name?: string;
+        last_name?: string;
+        email?: string;
+        phone?: string;
+        address?: string;
+        city?: string;
+        state?: string;
+        pincode?: string;
+    };
+}
+
+export interface Order {
+    id: string;
+    status: OrderStatus;
+    subtotal: number;
+    shipping_cost: number;
+    total: number;
+    payment_provider?: string | null;
+    payment_reference?: string | null;
+    created_at: string;
+    updated_at?: string;
+}
+
+export interface AdminOrderSummary extends Order {
+    user_id: string;
+    user_email: string;
+    first_name: string;
+    last_name: string;
+    digital_items: number;
+    physical_items: number;
+}
+
+export interface OrderItem {
+    id: string;
+    product_id: string;
+    quantity: number;
+    unit_price: number;
+    product_type: ProductType;
+    product_name: string;
+    product_slug: string;
+}
+
+export interface AdminOrderDetailsResponse {
+    order: any;
+    items: OrderItem[];
+}
+
+export type EntitlementSource = "order" | "admin_grant";
+
+export interface ProductEntitlement {
+    entitlement_id: string;
+    source: EntitlementSource;
+    order_id?: string | null;
+    note?: string | null;
+    granted_at: string;
+    product_id: string;
+    name: string;
+    slug: string;
+    category?: string | null;
+    product_type: ProductType;
+    type: ProductType;
+    cover_image?: string | null;
+    digital_file_name?: string | null;
+    digital_file_format?: DigitalFileFormat | null;
+}

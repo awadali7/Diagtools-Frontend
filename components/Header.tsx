@@ -190,6 +190,20 @@ export default function Header() {
                                             >
                                                 My Learning
                                             </Link>
+                                            <Link
+                                                href="/orders"
+                                                onClick={toggleProfile}
+                                                className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                            >
+                                                My Orders
+                                            </Link>
+                                            <Link
+                                                href="/downloads"
+                                                onClick={toggleProfile}
+                                                className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                                            >
+                                                My Downloads
+                                            </Link>
                                             {user.role === "admin" && (
                                                 <Link
                                                     href="/admin"

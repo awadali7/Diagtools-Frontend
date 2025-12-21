@@ -48,6 +48,8 @@ import { RequestsTab } from "@/components/admin/RequestsTab";
 import { CoursesTab } from "@/components/admin/CoursesTab";
 import { BlogsTab } from "@/components/admin/BlogsTab";
 import { KYCTab } from "@/components/admin/KYCTab";
+import { ProductsTab } from "@/components/admin/ProductsTab";
+import { OrdersTab } from "@/components/admin/OrdersTab";
 import { KYCModal } from "@/components/admin/KYCModal";
 import { formatDate, generateSlug } from "@/components/admin/utils";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -66,7 +68,14 @@ export default function AdminPage() {
     const { user, loading: authLoading, isAuth } = useAuth();
 
     const [activeTab, setActiveTab] = useState<
-        "dashboard" | "users" | "requests" | "courses" | "blogs" | "kyc"
+        | "dashboard"
+        | "users"
+        | "requests"
+        | "courses"
+        | "blogs"
+        | "kyc"
+        | "products"
+        | "orders"
     >("dashboard");
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [users, setUsers] = useState<User[]>([]);
@@ -226,6 +235,13 @@ export default function AdminPage() {
     }, [authLoading, isAuth, user, router]);
 
     const fetchData = async () => {
+        // Products/Orders tabs manage their own fetching to keep this page stable
+        if (activeTab === "products" || activeTab === "orders") {
+            setLoading(false);
+            setError(null);
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
@@ -1527,6 +1543,10 @@ export default function AdminPage() {
                         onDeleteBlog={handleDeleteBlog}
                     />
                 )}
+
+                {activeTab === "products" && <ProductsTab />}
+
+                {activeTab === "orders" && <OrdersTab />}
 
                 {activeTab === "kyc" && (
                     <KYCTab

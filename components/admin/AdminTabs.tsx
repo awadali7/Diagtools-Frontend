@@ -3,9 +3,25 @@
 import React from "react";
 
 interface AdminTabsProps {
-    activeTab: "dashboard" | "users" | "requests" | "courses" | "blogs" | "kyc";
+    activeTab:
+        | "dashboard"
+        | "users"
+        | "requests"
+        | "courses"
+        | "blogs"
+        | "kyc"
+        | "products"
+        | "orders";
     onTabChange: (
-        tab: "dashboard" | "users" | "requests" | "courses" | "blogs" | "kyc"
+        tab:
+            | "dashboard"
+            | "users"
+            | "requests"
+            | "courses"
+            | "blogs"
+            | "kyc"
+            | "products"
+            | "orders"
     ) => void;
 }
 
@@ -18,6 +34,8 @@ export const AdminTabs: React.FC<AdminTabsProps> = ({
         { id: "users" as const, label: "Users" },
         { id: "requests" as const, label: "Course Requests" },
         { id: "courses" as const, label: "Courses" },
+        { id: "products" as const, label: "Products" },
+        { id: "orders" as const, label: "Orders" },
         { id: "blogs" as const, label: "Blogs" },
         { id: "kyc" as const, label: "KYC Verifications" },
     ];

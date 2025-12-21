@@ -2,7 +2,7 @@ import { ApiResponse } from "./types";
 
 // Get API base URL from environment variable
 const API_BASE_URL =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001/api";
 
 // Token storage keys
 const TOKEN_KEY = "auth_token";
@@ -229,10 +229,27 @@ class ApiClient {
         body?: any,
         options?: RequestInit
     ): Promise<ApiResponse<T>> {
+        const isFormData = body instanceof FormData;
+
+        let headers: HeadersInit;
+        if (isFormData) {
+            const token = this.getToken();
+            headers = {};
+            if (token) {
+                headers["Authorization"] = `Bearer ${token}`;
+            }
+        } else {
+            headers = this.getHeaders();
+        }
+
         return this.fetch<T>(endpoint, {
             ...options,
             method: "PUT",
-            body: body ? JSON.stringify(body) : undefined,
+            headers: {
+                ...headers,
+                ...(options?.headers as Record<string, string>),
+            },
+            body: body ? (isFormData ? body : JSON.stringify(body)) : undefined,
         });
     }
 

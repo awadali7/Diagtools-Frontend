@@ -9,4 +9,8 @@ export { notificationsApi } from "./notifications";
 export { blogsApi } from "./blogs";
 export { uploadsApi } from "./uploads";
 export { kycApi } from "./kyc";
+export { productsApi } from "./products";
+export { ordersApi } from "./orders";
+export { entitlementsApi } from "./entitlements";
+export { paymentsApi } from "./payments";
 export * from "./types";
