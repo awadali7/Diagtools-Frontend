@@ -22,6 +22,48 @@ import RegisterDrawer from "@/components/RegisterDrawer";
 import type { CourseDetails, Video } from "@/lib/api/types";
 import { setRedirectPath, shouldPreserveRedirect } from "@/lib/utils/redirect";
 
+// Razorpay type definitions
+type RazorpaySuccessResponse = {
+    razorpay_order_id: string;
+    razorpay_payment_id: string;
+    razorpay_signature: string;
+};
+
+type RazorpayOptions = {
+    key: string;
+    amount: number;
+    currency: string;
+    name: string;
+    description?: string;
+    order_id: string;
+    handler: (response: RazorpaySuccessResponse) => void;
+    prefill?: {
+        name?: string;
+        email?: string;
+        contact?: string;
+    };
+    notes?: Record<string, string>;
+    theme?: {
+        color?: string;
+    };
+    modal?: {
+        ondismiss?: () => void;
+    };
+};
+
+type RazorpayInstance = {
+    open: () => void;
+    on?: (event: string, cb: (response?: any) => void) => void;
+};
+
+type RazorpayCtor = new (options: RazorpayOptions) => RazorpayInstance;
+
+declare global {
+    interface Window {
+        Razorpay?: RazorpayCtor;
+    }
+}
+
 export default function CourseDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -284,34 +326,6 @@ export default function CourseDetailPage() {
         razorpay_signature: string;
     };
 
-    type RazorpayOptions = {
-        key: string;
-        amount: number;
-        currency: string;
-        name: string;
-        description?: string;
-        order_id: string;
-        handler: (response: RazorpaySuccessResponse) => void;
-        prefill?: { name?: string; email?: string; contact?: string };
-        notes?: Record<string, string>;
-        theme?: { color?: string };
-        modal?: {
-            ondismiss?: () => void;
-        };
-    };
-
-    type RazorpayInstance = {
-        open: () => void;
-        on?: (event: string, cb: (response?: any) => void) => void;
-    };
-    type RazorpayCtor = new (options: RazorpayOptions) => RazorpayInstance;
-
-    declare global {
-        interface Window {
-            Razorpay?: RazorpayCtor;
-        }
-    }
-
     const handlePurchaseCourse = async () => {
         if (!course || !user) {
             if (!user) {
@@ -383,7 +397,7 @@ export default function CourseDetailPage() {
                         user.last_name || ""
                     }`.trim(),
                     email: user.email || "",
-                    contact: user.phone || "",
+                    // contact is optional - user can enter phone manually in Razorpay form
                 },
                 notes: { course_id: course.id },
                 theme: { color: "#B00000" },

@@ -806,7 +806,7 @@ export const ProductsTab: React.FC = () => {
                                         <button
                                             type="button"
                                             onClick={() => {
-                                                setForm((p) => ({ ...p, videos: [...p.videos, { title: "", url: "", thumbnail: "" }] }));
+                                                setForm((p) => ({ ...p, videos: [...p.videos, { title: "", file: null, thumbnail: null, preview: null, thumbnailPreview: null }] }));
                                             }}
                                             className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-[#B00000] hover:text-[#B00000] transition-colors"
                                         >
