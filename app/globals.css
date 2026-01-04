@@ -207,3 +207,25 @@ a {
     background-color: transparent;
     padding: 0;
 }
+
+/* Hide YouTube share button menu and Copy Link button */
+.fullscreen-controls-always-on .fullscreen-action-menu {
+    display: none !important;
+}
+
+/* Hide Copy Link button and share options */
+.ytp-copylink-button,
+button[aria-label*="Copy"],
+button[aria-label*="copy"],
+button[title*="Copy"],
+button[title*="copy"],
+ytd-menu-renderer[target-id*="copy"],
+ytd-menu-renderer[target-id*="Copy"],
+.ytp-copylink-icon,
+ytd-copylink-button-renderer,
+#copy-link-button,
+button.ytp-button[aria-label*="link"],
+ytd-menu-service-item-renderer[aria-label*="Copy"],
+ytd-menu-service-item-renderer[aria-label*="Share"] {
+    display: none !important;
+}

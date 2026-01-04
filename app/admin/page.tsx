@@ -27,6 +27,8 @@ import {
     Tablet,
     Globe,
     Calendar,
+    FileText,
+    Upload,
 } from "lucide-react";
 
 // Dynamically import markdown editor to avoid SSR issues
@@ -184,6 +186,7 @@ export default function AdminPage() {
         pdfs: [] as { name: string; url: string }[],
         markdown: "",
     });
+    const [pdfFiles, setPdfFiles] = useState<File[]>([]);
     const [isSubmittingVideo, setIsSubmittingVideo] = useState(false);
     const [videoFormSuccess, setVideoFormSuccess] = useState<string | null>(
         null
@@ -1191,18 +1194,21 @@ export default function AdminPage() {
     const handleManageVideos = async (course: Course) => {
         setSelectedCourse(course);
         setEditingVideo(null);
+        setPdfFiles([]);
+        setError(null);
+        setVideoFormSuccess(null);
+        setIsVideoModalOpen(true);
+        // Initialize form with default values
         setVideoFormData({
             title: "",
             video_url: "",
             description: "",
-            order_index: 0,
+            order_index: 0, // Will be auto-updated after videos load
             pdfs: [],
             markdown: "",
         });
-        setError(null);
-        setVideoFormSuccess(null);
-        setIsVideoModalOpen(true);
         await fetchVideos(course.id);
+        // Order index will be auto-set after videos are loaded
     };
 
     const fetchVideos = async (courseId: string) => {
@@ -1242,14 +1248,22 @@ export default function AdminPage() {
 
     const handleAddVideo = () => {
         setEditingVideo(null);
+        // Calculate next order index
+        const maxOrderIndex =
+            videos.length > 0
+                ? Math.max(...videos.map((v) => v.order_index || 0))
+                : -1;
+        const nextOrderIndex = maxOrderIndex + 1;
+
         setVideoFormData({
             title: "",
             video_url: "",
             description: "",
-            order_index: videos.length,
+            order_index: nextOrderIndex,
             pdfs: [],
             markdown: "",
         });
+        setPdfFiles([]);
         setError(null);
         setVideoFormSuccess(null);
     };
@@ -1268,9 +1282,47 @@ export default function AdminPage() {
             pdfs: (video as any).pdfs || [],
             markdown: markdownContent,
         });
+        setPdfFiles([]); // Clear any selected files when editing
         setError(null);
         setVideoFormSuccess(null);
     };
+
+    // Auto-update order_index when videos change (only when not editing)
+    useEffect(() => {
+        if (
+            !editingVideo &&
+            videos.length > 0 &&
+            selectedCourse &&
+            isVideoModalOpen
+        ) {
+            const maxOrderIndex = Math.max(
+                ...videos.map((v) => v.order_index || 0)
+            );
+            const nextOrderIndex = maxOrderIndex + 1;
+
+            // Only update if current order_index is 0 or less than/equal to max
+            if (
+                videoFormData.order_index === 0 ||
+                videoFormData.order_index <= maxOrderIndex
+            ) {
+                setVideoFormData((prev) => ({
+                    ...prev,
+                    order_index: nextOrderIndex,
+                }));
+            }
+        } else if (
+            !editingVideo &&
+            videos.length === 0 &&
+            selectedCourse &&
+            isVideoModalOpen
+        ) {
+            // No videos yet, set to 0
+            setVideoFormData((prev) => ({
+                ...prev,
+                order_index: 0,
+            }));
+        }
+    }, [videos, editingVideo, selectedCourse, isVideoModalOpen]);
 
     const handleDeleteVideo = (video: Video) => {
         setVideoToDelete(video);
@@ -1347,124 +1399,148 @@ export default function AdminPage() {
         setVideoFormSuccess(null);
 
         try {
-            const videoData: any = {
-                title: videoFormData.title,
-                video_url: videoFormData.video_url,
-                order_index: parseInt(videoFormData.order_index.toString()),
-            };
+            // Check if we have PDF files to upload - use FormData
+            const hasPdfFiles = pdfFiles.length > 0;
+            const hasPdfUrls =
+                videoFormData.pdfs && videoFormData.pdfs.length > 0;
 
-            if (videoFormData.description) {
-                videoData.description = videoFormData.description;
-            }
-            if (videoFormData.markdown) {
-                videoData.markdown = videoFormData.markdown;
-            }
-            if (videoFormData.pdfs && videoFormData.pdfs.length > 0) {
-                videoData.pdfs = videoFormData.pdfs;
-            }
-
-            if (editingVideo) {
-                // Update existing video
-                const response = await coursesApi.updateVideo(
-                    selectedCourse.id,
-                    editingVideo.id,
-                    videoData
+            let response;
+            if (hasPdfFiles) {
+                // Use FormData for file uploads
+                const formData = new FormData();
+                formData.append("title", videoFormData.title);
+                formData.append("video_url", videoFormData.video_url);
+                formData.append(
+                    "order_index",
+                    videoFormData.order_index.toString()
                 );
 
-                if (response.success) {
-                    setVideoFormSuccess("Video updated successfully!");
-                    await fetchVideos(selectedCourse.id);
-                    // Force refresh the expandable list if it's currently expanded
-                    if (expandedCourseId === selectedCourse.id) {
-                        // Clear the cache to force a refresh
-                        const updatedMap = { ...courseVideosMap };
-                        delete updatedMap[selectedCourse.id];
-                        setCourseVideosMap(updatedMap);
-                        // Re-fetch videos for the expanded course
-                        setLoadingCourseVideos(selectedCourse.id);
-                        try {
-                            const refreshResponse = await coursesApi.getVideos(
-                                selectedCourse.id
-                            );
-                            if (
-                                refreshResponse.success &&
-                                refreshResponse.data
-                            ) {
-                                setCourseVideosMap({
-                                    ...updatedMap,
-                                    [selectedCourse.id]: Array.isArray(
-                                        refreshResponse.data
-                                    )
-                                        ? refreshResponse.data
-                                        : [],
-                                });
-                            }
-                        } catch (err: any) {
-                            console.error("Failed to refresh videos:", err);
-                        } finally {
-                            setLoadingCourseVideos(null);
-                        }
-                    }
-                    setTimeout(() => {
-                        setEditingVideo(null);
-                        setVideoFormSuccess(null);
-                        setError(null);
-                    }, 1500);
+                if (videoFormData.description) {
+                    formData.append("description", videoFormData.description);
+                }
+                if (videoFormData.markdown) {
+                    formData.append("markdown", videoFormData.markdown);
+                }
+
+                // Add PDF files
+                pdfFiles.forEach((file) => {
+                    formData.append("pdfs", file);
+                });
+
+                // Add existing PDF URLs if any
+                if (hasPdfUrls) {
+                    formData.append("pdfs", JSON.stringify(videoFormData.pdfs));
+                }
+
+                if (editingVideo) {
+                    // Update existing video with FormData
+                    response = await coursesApi.updateVideo(
+                        selectedCourse.id,
+                        editingVideo.id,
+                        formData as any
+                    );
+                } else {
+                    // Create new video with FormData
+                    response = await coursesApi.createVideo(
+                        selectedCourse.id,
+                        formData as any
+                    );
                 }
             } else {
-                // Create new video
-                const response = await coursesApi.createVideo(
-                    selectedCourse.id,
-                    videoData
-                );
+                // Use JSON for non-file uploads
+                const videoData: any = {
+                    title: videoFormData.title,
+                    video_url: videoFormData.video_url,
+                    order_index: parseInt(videoFormData.order_index.toString()),
+                };
 
-                if (response.success) {
-                    setVideoFormSuccess("Video created successfully!");
-                    await fetchVideos(selectedCourse.id);
-                    // Force refresh the expandable list if it's currently expanded
-                    if (expandedCourseId === selectedCourse.id) {
-                        // Clear the cache to force a refresh
-                        const updatedMap = { ...courseVideosMap };
-                        delete updatedMap[selectedCourse.id];
-                        setCourseVideosMap(updatedMap);
-                        // Re-fetch videos for the expanded course
-                        setLoadingCourseVideos(selectedCourse.id);
-                        try {
-                            const refreshResponse = await coursesApi.getVideos(
-                                selectedCourse.id
-                            );
-                            if (
-                                refreshResponse.success &&
-                                refreshResponse.data
-                            ) {
-                                setCourseVideosMap({
-                                    ...updatedMap,
-                                    [selectedCourse.id]: Array.isArray(
-                                        refreshResponse.data
-                                    )
-                                        ? refreshResponse.data
-                                        : [],
-                                });
-                            }
-                        } catch (err: any) {
-                            console.error("Failed to refresh videos:", err);
-                        } finally {
-                            setLoadingCourseVideos(null);
+                if (videoFormData.description) {
+                    videoData.description = videoFormData.description;
+                }
+                if (videoFormData.markdown) {
+                    videoData.markdown = videoFormData.markdown;
+                }
+                if (hasPdfUrls) {
+                    videoData.pdfs = videoFormData.pdfs;
+                }
+
+                if (editingVideo) {
+                    // Update existing video
+                    response = await coursesApi.updateVideo(
+                        selectedCourse.id,
+                        editingVideo.id,
+                        videoData
+                    );
+                } else {
+                    // Create new video
+                    response = await coursesApi.createVideo(
+                        selectedCourse.id,
+                        videoData
+                    );
+                }
+            }
+
+            if (response.success) {
+                setVideoFormSuccess(
+                    editingVideo
+                        ? "Video updated successfully!"
+                        : "Video created successfully!"
+                );
+                await fetchVideos(selectedCourse.id);
+                // Force refresh the expandable list if it's currently expanded
+                if (expandedCourseId === selectedCourse.id) {
+                    // Clear the cache to force a refresh
+                    const updatedMap = { ...courseVideosMap };
+                    delete updatedMap[selectedCourse.id];
+                    setCourseVideosMap(updatedMap);
+                    // Re-fetch videos for the expanded course
+                    setLoadingCourseVideos(selectedCourse.id);
+                    try {
+                        const refreshResponse = await coursesApi.getVideos(
+                            selectedCourse.id
+                        );
+                        if (refreshResponse.success && refreshResponse.data) {
+                            setCourseVideosMap({
+                                ...updatedMap,
+                                [selectedCourse.id]: Array.isArray(
+                                    refreshResponse.data
+                                )
+                                    ? refreshResponse.data
+                                    : [],
+                            });
                         }
+                    } catch (err: any) {
+                        console.error("Failed to refresh videos:", err);
+                    } finally {
+                        setLoadingCourseVideos(null);
                     }
-                    setTimeout(() => {
+                }
+                setTimeout(() => {
+                    if (editingVideo) {
+                        setEditingVideo(null);
+                    } else {
+                        // Calculate next order index after adding video
+                        const maxOrderIndex =
+                            videos.length > 0
+                                ? Math.max(
+                                      ...videos.map((v) => v.order_index || 0)
+                                  )
+                                : -1;
+                        const nextOrderIndex = maxOrderIndex + 1;
+
                         setVideoFormData({
                             title: "",
                             video_url: "",
                             description: "",
-                            order_index: videos.length + 1,
+                            order_index: nextOrderIndex,
                             pdfs: [],
                             markdown: "",
                         });
-                        setVideoFormSuccess(null);
-                        setError(null);
-                    }, 1500);
-                }
+                        setPdfFiles([]);
+                    }
+                    setVideoFormSuccess(null);
+                    setError(null);
+                }, 1500);
             }
         } catch (err: any) {
             setError(err.message || "Failed to save video");
@@ -1514,7 +1590,11 @@ export default function AdminPage() {
                 )}
 
                 {activeTab === "dashboard" && (
-                    <DashboardTab stats={stats} loading={loading} />
+                    <DashboardTab
+                        stats={stats}
+                        loading={loading}
+                        onTabChange={setActiveTab}
+                    />
                 )}
 
                 {activeTab === "users" && (
@@ -3285,9 +3365,20 @@ export default function AdminPage() {
                                                                 ) || 0,
                                                         })
                                                     }
-                                                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
-                                                    placeholder="0"
+                                                    className={`w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent ${
+                                                        !editingVideo
+                                                            ? "bg-gray-50 cursor-not-allowed"
+                                                            : ""
+                                                    }`}
+                                                    placeholder="Auto-generated"
+                                                    readOnly={!editingVideo}
                                                 />
+                                                {!editingVideo && (
+                                                    <p className="text-xs text-gray-500 mt-1">
+                                                        Automatically set to
+                                                        next available index
+                                                    </p>
+                                                )}
                                             </div>
                                         </div>
 
@@ -3334,24 +3425,284 @@ export default function AdminPage() {
                                             />
                                         </div>
 
+                                        {/* PDF Upload */}
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-900 mb-2">
+                                                PDF Attachments
+                                            </label>
+                                            <div className="space-y-3">
+                                                {/* Hidden file input */}
+                                                <input
+                                                    type="file"
+                                                    id="pdf-upload-input"
+                                                    accept=".pdf"
+                                                    multiple
+                                                    className="hidden"
+                                                    onChange={(e) => {
+                                                        const files =
+                                                            Array.from(
+                                                                e.target
+                                                                    .files || []
+                                                            );
+                                                        // Add new files to existing ones
+                                                        setPdfFiles([
+                                                            ...pdfFiles,
+                                                            ...files,
+                                                        ]);
+                                                        // Reset input to allow selecting same file again
+                                                        e.target.value = "";
+                                                    }}
+                                                />
+
+                                                {/* Add PDF Button */}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        document
+                                                            .getElementById(
+                                                                "pdf-upload-input"
+                                                            )
+                                                            ?.click();
+                                                    }}
+                                                    className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-white bg-[#B00000] rounded-lg hover:bg-red-800 transition-colors"
+                                                >
+                                                    <Upload className="w-4 h-4" />
+                                                    <span>Add PDF Files</span>
+                                                </button>
+
+                                                {/* Selected Files List */}
+                                                {pdfFiles.length > 0 && (
+                                                    <div className="mt-3 space-y-2">
+                                                        <p className="text-xs font-medium text-gray-700">
+                                                            Selected Files (
+                                                            {pdfFiles.length}):
+                                                        </p>
+                                                        <div className="space-y-2 max-h-48 overflow-y-auto">
+                                                            {pdfFiles.map(
+                                                                (
+                                                                    file,
+                                                                    index
+                                                                ) => (
+                                                                    <div
+                                                                        key={
+                                                                            index
+                                                                        }
+                                                                        className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                                                                    >
+                                                                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                                                            <FileText className="w-4 h-4 text-gray-500 shrink-0" />
+                                                                            <span className="text-gray-700 truncate">
+                                                                                {
+                                                                                    file.name
+                                                                                }
+                                                                            </span>
+                                                                            <span className="text-xs text-gray-500 shrink-0">
+                                                                                (
+                                                                                {(
+                                                                                    file.size /
+                                                                                    1024
+                                                                                ).toFixed(
+                                                                                    1
+                                                                                )}{" "}
+                                                                                KB)
+                                                                            </span>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setPdfFiles(
+                                                                                    pdfFiles.filter(
+                                                                                        (
+                                                                                            _,
+                                                                                            i
+                                                                                        ) =>
+                                                                                            i !==
+                                                                                            index
+                                                                                    )
+                                                                                );
+                                                                            }}
+                                                                            className="ml-2 text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors shrink-0"
+                                                                            title="Remove file"
+                                                                        >
+                                                                            <X className="w-4 h-4" />
+                                                                        </button>
+                                                                    </div>
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Existing PDFs from Database */}
+                                                {videoFormData.pdfs &&
+                                                    videoFormData.pdfs.length >
+                                                        0 && (
+                                                        <div className="mt-3 space-y-2">
+                                                            <p className="text-xs font-medium text-gray-700">
+                                                                Existing PDFs (
+                                                                {
+                                                                    videoFormData
+                                                                        .pdfs
+                                                                        .length
+                                                                }
+                                                                ):
+                                                            </p>
+                                                            <div className="space-y-2">
+                                                                {videoFormData.pdfs.map(
+                                                                    (
+                                                                        pdf,
+                                                                        index
+                                                                    ) => (
+                                                                        <div
+                                                                            key={
+                                                                                index
+                                                                            }
+                                                                            className="flex items-center justify-between px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm"
+                                                                        >
+                                                                            <div className="flex items-center space-x-2 flex-1 min-w-0">
+                                                                                <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                                                                                <a
+                                                                                    href={
+                                                                                        pdf.url
+                                                                                    }
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="text-blue-600 hover:underline truncate"
+                                                                                >
+                                                                                    {
+                                                                                        pdf.name
+                                                                                    }
+                                                                                </a>
+                                                                            </div>
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => {
+                                                                                    setVideoFormData(
+                                                                                        {
+                                                                                            ...videoFormData,
+                                                                                            pdfs: videoFormData.pdfs.filter(
+                                                                                                (
+                                                                                                    _,
+                                                                                                    i
+                                                                                                ) =>
+                                                                                                    i !==
+                                                                                                    index
+                                                                                            ),
+                                                                                        }
+                                                                                    );
+                                                                                }}
+                                                                                className="ml-2 text-red-600 hover:text-red-800 p-1 hover:bg-red-50 rounded transition-colors shrink-0"
+                                                                                title="Remove PDF"
+                                                                            >
+                                                                                <X className="w-4 h-4" />
+                                                                            </button>
+                                                                        </div>
+                                                                    )
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                            </div>
+                                        </div>
+
                                         {/* Markdown */}
                                         <div>
                                             <label className="block text-sm font-medium text-slate-900 mb-2">
                                                 Markdown Content
                                             </label>
-                                            <textarea
-                                                value={videoFormData.markdown}
-                                                onChange={(e) =>
-                                                    setVideoFormData({
-                                                        ...videoFormData,
-                                                        markdown:
-                                                            e.target.value,
-                                                    })
-                                                }
-                                                rows={5}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent font-mono text-sm"
-                                                placeholder="Markdown content..."
-                                            />
+
+                                            {/* Markdown Editor */}
+                                            <div data-color-mode="light">
+                                                <MDEditor
+                                                    value={
+                                                        videoFormData.markdown
+                                                    }
+                                                    onChange={(value) =>
+                                                        setVideoFormData({
+                                                            ...videoFormData,
+                                                            markdown:
+                                                                value || "",
+                                                        })
+                                                    }
+                                                    preview="edit"
+                                                    hideToolbar={false}
+                                                    visibleDragbar={false}
+                                                    height={450}
+                                                    data-color-mode="light"
+                                                />
+                                            </div>
+
+                                            {/* Helper Buttons */}
+                                            <div className="mt-2 flex flex-wrap gap-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current =
+                                                            videoFormData.markdown ||
+                                                            "";
+                                                        setVideoFormData({
+                                                            ...videoFormData,
+                                                            markdown:
+                                                                current +
+                                                                "\n\n## Heading\n\n",
+                                                        });
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                                                >
+                                                    + H2 Heading
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current =
+                                                            videoFormData.markdown ||
+                                                            "";
+                                                        setVideoFormData({
+                                                            ...videoFormData,
+                                                            markdown:
+                                                                current +
+                                                                "\n\n[Link Text](https://example.com)\n\n",
+                                                        });
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                                                >
+                                                    + Link
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current =
+                                                            videoFormData.markdown ||
+                                                            "";
+                                                        setVideoFormData({
+                                                            ...videoFormData,
+                                                            markdown:
+                                                                current +
+                                                                '\n\n<iframe src="https://example.com" width="600" height="400" frameborder="0" allowfullscreen></iframe>\n\n',
+                                                        });
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                                                >
+                                                    + Iframe
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        const current =
+                                                            videoFormData.markdown ||
+                                                            "";
+                                                        setVideoFormData({
+                                                            ...videoFormData,
+                                                            markdown:
+                                                                current +
+                                                                "\n\n---\n\n",
+                                                        });
+                                                    }}
+                                                    className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-gray-100 rounded hover:bg-gray-200 transition-colors"
+                                                >
+                                                    + Divider
+                                                </button>
+                                            </div>
                                         </div>
 
                                         {/* Buttons */}

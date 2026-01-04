@@ -3,6 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import rehypeRaw from "rehype-raw";
+import remarkGfm from "remark-gfm";
 import {
     ArrowLeft,
     Play,
@@ -22,48 +25,6 @@ import RegisterDrawer from "@/components/RegisterDrawer";
 import type { CourseDetails, Video } from "@/lib/api/types";
 import { setRedirectPath, shouldPreserveRedirect } from "@/lib/utils/redirect";
 
-// Razorpay type definitions
-type RazorpaySuccessResponse = {
-    razorpay_order_id: string;
-    razorpay_payment_id: string;
-    razorpay_signature: string;
-};
-
-type RazorpayOptions = {
-    key: string;
-    amount: number;
-    currency: string;
-    name: string;
-    description?: string;
-    order_id: string;
-    handler: (response: RazorpaySuccessResponse) => void;
-    prefill?: {
-        name?: string;
-        email?: string;
-        contact?: string;
-    };
-    notes?: Record<string, string>;
-    theme?: {
-        color?: string;
-    };
-    modal?: {
-        ondismiss?: () => void;
-    };
-};
-
-type RazorpayInstance = {
-    open: () => void;
-    on?: (event: string, cb: (response?: any) => void) => void;
-};
-
-type RazorpayCtor = new (options: RazorpayOptions) => RazorpayInstance;
-
-declare global {
-    interface Window {
-        Razorpay?: RazorpayCtor;
-    }
-}
-
 export default function CourseDetailPage() {
     const params = useParams();
     const router = useRouter();
@@ -78,6 +39,201 @@ export default function CourseDetailPage() {
     const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
     const [isRegisterDrawerOpen, setIsRegisterDrawerOpen] = useState(false);
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+
+    // Inject CSS early to hide YouTube share button - must be at top level
+    useEffect(() => {
+        const styleId = "youtube-share-button-hide";
+        if (!document.getElementById(styleId)) {
+            const style = document.createElement("style");
+            style.id = styleId;
+            style.textContent = `
+                .fullscreen-controls-always-on .fullscreen-action-menu {
+                    display: none !important;
+                }
+                /* Hide YouTube share button and Copy Link button */
+                ytd-menu-renderer[target-id="watch-fullscreen-action-menu"],
+                .ytp-fullscreen-button,
+                .ytp-share-button,
+                .ytp-copylink-button,
+                button[aria-label*="Copy"],
+                button[aria-label*="copy"],
+                button[title*="Copy"],
+                button[title*="copy"],
+                ytd-menu-renderer[target-id*="copy"],
+                ytd-menu-renderer[target-id*="Copy"],
+                /* Privacy-enhanced mode Copy Link button selectors */
+                .ytp-copylink-icon,
+                ytd-copylink-button-renderer,
+                #copy-link-button,
+                button.ytp-button[aria-label*="link"],
+                /* Additional share menu items */
+                ytd-menu-service-item-renderer[aria-label*="Copy"],
+                ytd-menu-service-item-renderer[aria-label*="Share"] {
+                    display: none !important;
+                }
+            `;
+            document.head.appendChild(style);
+        }
+    }, []);
+
+    // Block clipboard operations to prevent copying video URLs
+    useEffect(() => {
+        const handleCopy = (e: ClipboardEvent) => {
+            // Block copying if it contains YouTube URLs
+            const selection = window.getSelection()?.toString() || "";
+            const clipboardData = e.clipboardData;
+
+            if (
+                selection.includes("youtube.com") ||
+                selection.includes("youtu.be") ||
+                selection.includes("youtube-nocookie.com")
+            ) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+
+            // Also check clipboard data
+            if (clipboardData) {
+                const pastedData = clipboardData.getData("text/plain");
+                if (
+                    pastedData.includes("youtube.com") ||
+                    pastedData.includes("youtu.be") ||
+                    pastedData.includes("youtube-nocookie.com")
+                ) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }
+        };
+
+        const handleCopyEvent = (e: Event) => {
+            const event = e as ClipboardEvent;
+            handleCopy(event);
+        };
+
+        // Block copy events
+        document.addEventListener("copy", handleCopyEvent, true);
+        document.addEventListener("cut", handleCopyEvent, true);
+
+        // Block keyboard shortcuts (Ctrl+C, Cmd+C)
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === "c") {
+                const selection = window.getSelection()?.toString() || "";
+                if (
+                    selection.includes("youtube.com") ||
+                    selection.includes("youtu.be") ||
+                    selection.includes("youtube-nocookie.com")
+                ) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+            }
+        };
+
+        document.addEventListener("keydown", handleKeyDown, true);
+
+        return () => {
+            document.removeEventListener("copy", handleCopyEvent, true);
+            document.removeEventListener("cut", handleCopyEvent, true);
+            document.removeEventListener("keydown", handleKeyDown, true);
+        };
+    }, []);
+
+    // Handle fullscreen mode - add overlays when fullscreen is entered
+    useEffect(() => {
+        const handleFullscreenChange = () => {
+            const fullscreenElement =
+                document.fullscreenElement ||
+                (document as any).webkitFullscreenElement ||
+                (document as any).mozFullScreenElement ||
+                (document as any).msFullscreenElement;
+
+            if (fullscreenElement) {
+                // Fullscreen entered - add overlays to block sharing options
+                const overlayId = "fullscreen-share-blocker";
+                if (!document.getElementById(overlayId)) {
+                    const overlay = document.createElement("div");
+                    overlay.id = overlayId;
+                    overlay.style.cssText = `
+                        position: fixed;
+                        top: 0;
+                        right: 0;
+                        width: 150px;
+                        height: 80px;
+                        background: linear-gradient(225deg, rgba(0,0,0,0.98) 0%, rgba(0,0,0,0.92) 40%, rgba(0,0,0,0.8) 70%, transparent 100%);
+                        clip-path: polygon(100% 0, 100% 100%, 0 0);
+                        pointer-events: auto;
+                        z-index: 999999;
+                        cursor: not-allowed;
+                    `;
+                    overlay.onclick = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        return false;
+                    };
+                    overlay.onmousedown = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        return false;
+                    };
+                    overlay.oncontextmenu = (e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        return false;
+                    };
+                    fullscreenElement.appendChild(overlay);
+                }
+            } else {
+                // Fullscreen exited - remove overlays
+                const overlay = document.getElementById(
+                    "fullscreen-share-blocker"
+                );
+                if (overlay) {
+                    overlay.remove();
+                }
+            }
+        };
+
+        // Listen for fullscreen changes
+        document.addEventListener("fullscreenchange", handleFullscreenChange);
+        document.addEventListener(
+            "webkitfullscreenchange",
+            handleFullscreenChange
+        );
+        document.addEventListener(
+            "mozfullscreenchange",
+            handleFullscreenChange
+        );
+        document.addEventListener("MSFullscreenChange", handleFullscreenChange);
+
+        return () => {
+            document.removeEventListener(
+                "fullscreenchange",
+                handleFullscreenChange
+            );
+            document.removeEventListener(
+                "webkitfullscreenchange",
+                handleFullscreenChange
+            );
+            document.removeEventListener(
+                "mozfullscreenchange",
+                handleFullscreenChange
+            );
+            document.removeEventListener(
+                "MSFullscreenChange",
+                handleFullscreenChange
+            );
+
+            // Clean up overlay if it exists
+            const overlay = document.getElementById("fullscreen-share-blocker");
+            if (overlay) {
+                overlay.remove();
+            }
+        };
+    }, []);
 
     // Helper to open login drawer with redirect preservation
     const handleOpenLoginDrawer = () => {
@@ -326,6 +482,34 @@ export default function CourseDetailPage() {
         razorpay_signature: string;
     };
 
+    type RazorpayOptions = {
+        key: string;
+        amount: number;
+        currency: string;
+        name: string;
+        description?: string;
+        order_id: string;
+        handler: (response: RazorpaySuccessResponse) => void;
+        prefill?: { name?: string; email?: string; contact?: string };
+        notes?: Record<string, string>;
+        theme?: { color?: string };
+        modal?: {
+            ondismiss?: () => void;
+        };
+    };
+
+    type RazorpayInstance = {
+        open: () => void;
+        on?: (event: string, cb: (response?: any) => void) => void;
+    };
+    type RazorpayCtor = new (options: RazorpayOptions) => RazorpayInstance;
+
+    declare global {
+        interface Window {
+            Razorpay?: RazorpayCtor;
+        }
+    }
+
     const handlePurchaseCourse = async () => {
         if (!course || !user) {
             if (!user) {
@@ -397,7 +581,7 @@ export default function CourseDetailPage() {
                         user.last_name || ""
                     }`.trim(),
                     email: user.email || "",
-                    // contact is optional - user can enter phone manually in Razorpay form
+                    contact: user.phone || "",
                 },
                 notes: { course_id: course.id },
                 theme: { color: "#B00000" },
@@ -559,19 +743,73 @@ export default function CourseDetailPage() {
         }
     };
 
-    // Get video URL - handle both property names
-    const getVideoUrl = (video: Video) => {
+    // Extract YouTube video ID from any URL format
+    const extractYouTubeId = (url: string): string | null => {
+        if (!url) return null;
+
+        // Handle embed URLs
+        const embedMatch = url.match(
+            /(?:youtube\.com\/embed\/|youtube-nocookie\.com\/embed\/)([^&\n?#]+)/
+        );
+        if (embedMatch) return embedMatch[1];
+
+        // Handle watch URLs
+        const watchMatch = url.match(
+            /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/
+        );
+        if (watchMatch) return watchMatch[1];
+
+        // Handle short URLs
+        const shortMatch = url.match(/youtu\.be\/([^&\n?#]+)/);
+        if (shortMatch) return shortMatch[1];
+
+        return null;
+    };
+
+    // Get video URL for iframe embed (returns YouTube embed URL)
+    const getVideoUrl = (video: Video): string => {
         const videoUrl = (video as any).video_url || video.youtube_url || "";
-        // Ensure it's an embed URL
-        if (videoUrl && !videoUrl.includes("embed")) {
-            // Convert YouTube URL to embed format if needed
-            const match = videoUrl.match(
-                /(?:youtube\.com\/watch\?v=|youtu\.be\/)([^&\n?#]+)/
-            );
-            if (match) {
-                return `https://www.youtube.com/embed/${match[1]}`;
+        if (!videoUrl) return "";
+
+        // Extract video ID and return embed URL
+        const videoId = extractYouTubeId(videoUrl);
+        if (videoId) {
+            // Use youtube-nocookie.com to remove Share and Watch Later buttons
+            // This privacy-enhanced mode replaces them with a single "Copy Link" button
+            return `https://www.youtube-nocookie.com/embed/${videoId}?modestbranding=1&rel=0&controls=1&fs=1&cc_load_policy=0&iv_load_policy=3&playsinline=1`;
+        }
+
+        // If already an embed URL, convert to youtube-nocookie.com
+        if (videoUrl && videoUrl.includes("embed")) {
+            try {
+                let urlToParse = videoUrl.startsWith("http")
+                    ? videoUrl
+                    : `https://${videoUrl}`;
+
+                urlToParse = urlToParse.replace(
+                    /youtube\.com\/embed\//g,
+                    "youtube-nocookie.com/embed/"
+                );
+
+                const url = new URL(urlToParse);
+                url.searchParams.set("modestbranding", "1");
+                url.searchParams.set("rel", "0");
+                url.searchParams.set("controls", "1");
+                url.searchParams.set("fs", "1");
+                url.searchParams.set("cc_load_policy", "0");
+                url.searchParams.set("iv_load_policy", "3");
+                url.searchParams.set("playsinline", "1");
+                return url.toString();
+            } catch (e) {
+                let processedUrl = videoUrl.replace(
+                    /youtube\.com\/embed\//g,
+                    "youtube-nocookie.com/embed/"
+                );
+                const separator = processedUrl.includes("?") ? "&" : "?";
+                return `${processedUrl}${separator}modestbranding=1&rel=0&controls=1&fs=1&cc_load_policy=0&iv_load_policy=3&playsinline=1`;
             }
         }
+
         return videoUrl;
     };
 
@@ -656,13 +894,22 @@ export default function CourseDetailPage() {
                                         </div>
                                     </div>
                                 ) : (
-                                    <iframe
-                                        src={getVideoUrl(currentVideo)}
-                                        title={currentVideo.title}
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowFullScreen
-                                        className="w-full h-full"
-                                    ></iframe>
+                                    <div
+                                        className="relative w-full h-full"
+                                        onContextMenu={(e) => {
+                                            // Prevent right-click menu on video container
+                                            e.preventDefault();
+                                            return false;
+                                        }}
+                                    >
+                                        <iframe
+                                            src={getVideoUrl(currentVideo)}
+                                            title={currentVideo.title}
+                                            allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
+                                            allowFullScreen
+                                            className="w-full h-full"
+                                        ></iframe>
+                                    </div>
                                 )}
                             </div>
                             {/* Video Title - Below Player */}
@@ -736,206 +983,243 @@ export default function CourseDetailPage() {
                                         <h4 className="text-sm font-semibold text-slate-900 mb-3">
                                             Course Notes & Details
                                         </h4>
-                                        <div className="markdown-content text-sm sm:text-base text-gray-700 leading-relaxed">
-                                            {(() => {
-                                                let markdownText =
-                                                    currentVideo.markdown ||
-                                                    currentVideo.markdown_content ||
-                                                    (currentVideo as any)
-                                                        .markdown ||
-                                                    "";
+                                        <div className="markdown-content prose prose-sm sm:prose-base max-w-none">
+                                            <ReactMarkdown
+                                                remarkPlugins={[remarkGfm]}
+                                                rehypePlugins={[rehypeRaw]}
+                                                components={{
+                                                    // Headings
+                                                    h1: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <h1
+                                                            className="text-2xl font-bold text-slate-900 mt-6 mb-4"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    h2: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <h2
+                                                            className="text-xl font-bold text-slate-900 mt-5 mb-3"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    h3: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <h3
+                                                            className="text-lg font-semibold text-slate-900 mt-4 mb-2"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    h4: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <h4
+                                                            className="text-base font-semibold text-slate-900 mt-3 mb-2"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    h5: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <h5
+                                                            className="text-sm font-semibold text-slate-900 mt-2 mb-1"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    h6: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <h6
+                                                            className="text-sm font-medium text-slate-900 mt-2 mb-1"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Paragraphs
+                                                    p: ({ node, ...props }) => (
+                                                        <p
+                                                            className="mb-3 text-gray-700 leading-relaxed"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Links
+                                                    a: ({ node, ...props }) => (
+                                                        <a
+                                                            className="text-[#B00000] hover:text-red-800 underline font-medium"
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Lists
+                                                    ul: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <ul
+                                                            className="list-disc ml-6 mb-3 space-y-1 text-gray-700"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    ol: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <ol
+                                                            className="list-decimal ml-6 mb-3 space-y-1 text-gray-700"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    li: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <li
+                                                            className="mb-1"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Horizontal rule (divider)
+                                                    hr: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <hr
+                                                            className="my-6 border-gray-300"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Code blocks
+                                                    code: ({
+                                                        node,
+                                                        inline,
+                                                        ...props
+                                                    }: any) => {
+                                                        if (inline) {
+                                                            return (
+                                                                <code
+                                                                    className="bg-gray-100 px-1.5 py-0.5 rounded text-sm font-mono text-gray-800"
+                                                                    {...props}
+                                                                />
+                                                            );
+                                                        }
+                                                        return (
+                                                            <code
+                                                                className="block bg-gray-100 p-3 rounded-lg text-sm font-mono text-gray-800 overflow-x-auto mb-3"
+                                                                {...props}
+                                                            />
+                                                        );
+                                                    },
+                                                    pre: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <pre
+                                                            className="bg-gray-100 p-3 rounded-lg overflow-x-auto mb-3"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Blockquotes
+                                                    blockquote: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <blockquote
+                                                            className="border-l-4 border-[#B00000] pl-4 italic text-gray-600 my-3"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Images
+                                                    img: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <img
+                                                            className="rounded-lg my-4 max-w-full h-auto"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Tables (from remark-gfm)
+                                                    table: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <div className="overflow-x-auto my-4">
+                                                            <table
+                                                                className="min-w-full border border-gray-300 rounded-lg"
+                                                                {...props}
+                                                            />
+                                                        </div>
+                                                    ),
+                                                    thead: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <thead
+                                                            className="bg-gray-50"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    th: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <th
+                                                            className="px-4 py-2 text-left font-semibold text-slate-900 border-b border-gray-300"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    td: ({
+                                                        node,
+                                                        ...props
+                                                    }) => (
+                                                        <td
+                                                            className="px-4 py-2 border-b border-gray-200 text-gray-700"
+                                                            {...props}
+                                                        />
+                                                    ),
+                                                    // Iframes (via rehype-raw)
+                                                    iframe: ({
+                                                        node,
+                                                        ...props
+                                                    }: any) => (
+                                                        <div className="my-4 rounded-lg overflow-hidden">
+                                                            <iframe
+                                                                className="w-full"
+                                                                style={{
+                                                                    minHeight:
+                                                                        "400px",
+                                                                }}
+                                                                allowFullScreen
+                                                                {...props}
+                                                            />
+                                                        </div>
+                                                    ),
+                                                }}
+                                            >
+                                                {(() => {
+                                                    let markdownText =
+                                                        currentVideo.markdown ||
+                                                        currentVideo.markdown_content ||
+                                                        (currentVideo as any)
+                                                            .markdown ||
+                                                        "";
 
-                                                // Replace escaped newlines with actual newlines
-                                                markdownText =
-                                                    markdownText.replace(
+                                                    // Replace escaped newlines with actual newlines
+                                                    return markdownText.replace(
                                                         /\\n/g,
                                                         "\n"
                                                     );
-
-                                                const lines =
-                                                    markdownText.split("\n");
-                                                const elements: React.ReactElement[] =
-                                                    [];
-                                                let i = 0;
-
-                                                while (i < lines.length) {
-                                                    const line = lines[i];
-
-                                                    // Headers
-                                                    if (line.startsWith("# ")) {
-                                                        elements.push(
-                                                            <h1
-                                                                key={i}
-                                                                className="text-xl font-bold text-slate-900 mt-6 mb-3"
-                                                            >
-                                                                {line.substring(
-                                                                    2
-                                                                )}
-                                                            </h1>
-                                                        );
-                                                        i++;
-                                                    } else if (
-                                                        line.startsWith("## ")
-                                                    ) {
-                                                        elements.push(
-                                                            <h2
-                                                                key={i}
-                                                                className="text-lg font-bold text-slate-900 mt-4 mb-2"
-                                                            >
-                                                                {line.substring(
-                                                                    3
-                                                                )}
-                                                            </h2>
-                                                        );
-                                                        i++;
-                                                    } else if (
-                                                        line.startsWith("### ")
-                                                    ) {
-                                                        elements.push(
-                                                            <h3
-                                                                key={i}
-                                                                className="text-base font-semibold text-slate-900 mt-3 mb-2"
-                                                            >
-                                                                {line.substring(
-                                                                    4
-                                                                )}
-                                                            </h3>
-                                                        );
-                                                        i++;
-                                                    }
-                                                    // Horizontal rule
-                                                    else if (
-                                                        line.trim() === "---" ||
-                                                        line.trim() === "***" ||
-                                                        line.trim() === "___"
-                                                    ) {
-                                                        elements.push(
-                                                            <hr
-                                                                key={i}
-                                                                className="my-4 border-gray-300"
-                                                            />
-                                                        );
-                                                        i++;
-                                                    }
-                                                    // Unordered lists
-                                                    else if (
-                                                        line.startsWith("- ")
-                                                    ) {
-                                                        const listItems: string[] =
-                                                            [];
-                                                        while (
-                                                            i < lines.length &&
-                                                            lines[i].startsWith(
-                                                                "- "
-                                                            )
-                                                        ) {
-                                                            listItems.push(
-                                                                lines[
-                                                                    i
-                                                                ].substring(2)
-                                                            );
-                                                            i++;
-                                                        }
-                                                        elements.push(
-                                                            <ul
-                                                                key={i}
-                                                                className="list-disc ml-6 mb-3 space-y-1"
-                                                            >
-                                                                {listItems.map(
-                                                                    (
-                                                                        item,
-                                                                        idx
-                                                                    ) => (
-                                                                        <li
-                                                                            key={
-                                                                                idx
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                item
-                                                                            }
-                                                                        </li>
-                                                                    )
-                                                                )}
-                                                            </ul>
-                                                        );
-                                                    }
-                                                    // Ordered lists
-                                                    else if (
-                                                        /^\d+\. /.test(line)
-                                                    ) {
-                                                        const listItems: string[] =
-                                                            [];
-                                                        while (
-                                                            i < lines.length &&
-                                                            /^\d+\. /.test(
-                                                                lines[i]
-                                                            )
-                                                        ) {
-                                                            const match =
-                                                                lines[i].match(
-                                                                    /^\d+\. (.*)/
-                                                                );
-                                                            if (match) {
-                                                                listItems.push(
-                                                                    match[1]
-                                                                );
-                                                            }
-                                                            i++;
-                                                        }
-                                                        elements.push(
-                                                            <ol
-                                                                key={i}
-                                                                className="list-decimal ml-6 mb-3 space-y-1"
-                                                            >
-                                                                {listItems.map(
-                                                                    (
-                                                                        item,
-                                                                        idx
-                                                                    ) => (
-                                                                        <li
-                                                                            key={
-                                                                                idx
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                item
-                                                                            }
-                                                                        </li>
-                                                                    )
-                                                                )}
-                                                            </ol>
-                                                        );
-                                                    }
-                                                    // Regular text
-                                                    else if (line.trim()) {
-                                                        const processedLine =
-                                                            line
-                                                                .replace(
-                                                                    /\*\*(.*?)\*\*/g,
-                                                                    '<strong class="font-semibold">$1</strong>'
-                                                                )
-                                                                .replace(
-                                                                    /\*(.*?)\*/g,
-                                                                    "<em>$1</em>"
-                                                                );
-                                                        elements.push(
-                                                            <p
-                                                                key={i}
-                                                                className="mb-2"
-                                                                dangerouslySetInnerHTML={{
-                                                                    __html: processedLine,
-                                                                }}
-                                                            />
-                                                        );
-                                                        i++;
-                                                    } else {
-                                                        i++;
-                                                    }
-                                                }
-
-                                                return elements;
-                                            })()}
+                                                })()}
+                                            </ReactMarkdown>
                                         </div>
                                     </div>
                                 )}
