@@ -130,6 +130,7 @@ export default function AdminPage() {
         slug: "",
         description: "",
         price: 0,
+        is_featured: false,
         cover_image: null as File | null,
     });
     const [coverImagePreview, setCoverImagePreview] = useState<string | null>(
@@ -749,6 +750,7 @@ export default function AdminPage() {
             slug: "",
             description: "",
             price: 0,
+            is_featured: false,
             cover_image: null,
         });
         setCoverImagePreview(null);
@@ -764,6 +766,7 @@ export default function AdminPage() {
             slug: course.slug || "",
             description: course.description || "",
             price: course.price || 0,
+            is_featured: course.is_featured || false,
             cover_image: null,
         });
         setCoverImagePreview(course.cover_image || null);
@@ -838,6 +841,7 @@ export default function AdminPage() {
                     slug: slug,
                     description: courseFormData.description,
                     price: parseFloat(courseFormData.price.toString()),
+                    is_featured: courseFormData.is_featured,
                     cover_image: coverImageUrl || undefined,
                 });
 
@@ -888,6 +892,7 @@ export default function AdminPage() {
                     slug: slug,
                     description: courseFormData.description || "",
                     price: parseFloat(courseFormData.price.toString()),
+                    is_featured: courseFormData.is_featured,
                 };
 
                 if (coverImageBase64) {
@@ -911,6 +916,7 @@ export default function AdminPage() {
                             slug: "",
                             description: "",
                             price: 0,
+                            is_featured: false,
                             cover_image: null,
                         });
                         setCoverImagePreview(null);
@@ -2522,6 +2528,28 @@ export default function AdminPage() {
                                             />
                                         </div>
                                     )}
+                                </div>
+
+                                {/* Featured Checkbox */}
+                                <div className="flex items-center gap-2">
+                                    <input
+                                        type="checkbox"
+                                        id="course-featured"
+                                        checked={courseFormData.is_featured}
+                                        onChange={(e) =>
+                                            setCourseFormData({
+                                                ...courseFormData,
+                                                is_featured: e.target.checked,
+                                            })
+                                        }
+                                        className="w-4 h-4 text-[#B00000] border-gray-300 rounded focus:ring-[#B00000]"
+                                    />
+                                    <label
+                                        htmlFor="course-featured"
+                                        className="text-sm font-medium text-gray-700 cursor-pointer"
+                                    >
+                                        Featured (Show on Landing Page)
+                                    </label>
                                 </div>
 
                                 {/* Buttons */}

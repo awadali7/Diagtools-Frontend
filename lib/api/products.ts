@@ -19,6 +19,10 @@ export const productsApi = {
         return apiClient.get<Product[]>(`/products${suffix}`);
     },
 
+    getFeatured: async (): Promise<ApiResponse<Product[]>> => {
+        return apiClient.get<Product[]>("/products/featured/list");
+    },
+
     getBySlug: async (slug: string): Promise<ApiResponse<Product>> => {
         return apiClient.get<Product>(`/products/${slug}`);
     },
@@ -38,6 +42,7 @@ export const productsApi = {
         stock_quantity?: number;
         rating?: number;
         reviews_count?: number;
+        is_featured?: boolean;
         cover_image?: File | null;
         digital_file?: File | null;
         images?: File[];
@@ -56,6 +61,8 @@ export const productsApi = {
             form.append("rating", String(data.rating));
         if (data.reviews_count !== undefined)
             form.append("reviews_count", String(data.reviews_count));
+        if (data.is_featured !== undefined)
+            form.append("is_featured", String(data.is_featured));
         if (data.product_type === "physical") {
             form.append("stock_quantity", String(data.stock_quantity ?? 0));
         }
@@ -106,6 +113,7 @@ export const productsApi = {
             rating: number;
             reviews_count: number;
             is_active: boolean;
+            is_featured: boolean;
             cover_image: File | null;
             digital_file: File | null;
             images?: File[];

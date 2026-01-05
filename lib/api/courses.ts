@@ -8,6 +8,11 @@ export const coursesApi = {
         return apiClient.get<Course[]>("/courses");
     },
 
+    // Get featured courses (public)
+    getFeatured: async (): Promise<ApiResponse<Course[]>> => {
+        return apiClient.get<Course[]>("/courses/featured/list");
+    },
+
     // Get course by slug
     getBySlug: async (slug: string): Promise<ApiResponse<CourseDetails>> => {
         return apiClient.get<CourseDetails>(`/courses/${slug}`);

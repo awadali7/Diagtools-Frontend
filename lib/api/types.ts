@@ -67,6 +67,7 @@ export interface Course {
     description?: string;
     price: number;
     cover_image?: string;
+    is_featured?: boolean;
     created_at?: string;
     updated_at?: string;
     videos?: Video[];
@@ -390,6 +391,7 @@ export interface Product {
     cover_image?: string | null;
     images?: string[];
     videos?: ProductVideo[];
+    is_featured?: boolean;
 
     // Digital product fields
     digital_file_name?: string | null;

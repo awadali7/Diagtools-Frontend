@@ -29,6 +29,7 @@ type ProductFormState = {
     price: number;
     stock_quantity: number;
     is_active: boolean;
+    is_featured: boolean;
     cover_image: File | null;
     digital_file: File | null;
     images: ImageFile[];
@@ -54,6 +55,7 @@ const defaultForm: ProductFormState = {
     price: 0,
     stock_quantity: 0,
     is_active: true,
+    is_featured: false,
     cover_image: null,
     digital_file: null,
     images: [],
@@ -142,6 +144,7 @@ export const ProductsTab: React.FC = () => {
             price: Number(p.price || 0),
             stock_quantity: Number(p.stock_quantity || 0),
             is_active: p.is_active !== false,
+            is_featured: (p as any).is_featured || false,
             cover_image: null,
             digital_file: null,
             images: existingImages,
@@ -211,6 +214,7 @@ export const ProductsTab: React.FC = () => {
                     product_type: form.product_type,
                     price: form.price,
                     stock_quantity: form.stock_quantity,
+                    is_featured: form.is_featured,
                     cover_image: form.cover_image,
                     digital_file: form.digital_file,
                     images: imageFiles.length > 0 ? imageFiles : undefined,
@@ -228,6 +232,7 @@ export const ProductsTab: React.FC = () => {
                     price: form.price,
                     stock_quantity: form.stock_quantity,
                     is_active: form.is_active,
+                    is_featured: form.is_featured,
                     cover_image: form.cover_image,
                     digital_file: form.digital_file,
                     images: imageFiles.length > 0 ? imageFiles : undefined,
@@ -837,23 +842,40 @@ export const ProductsTab: React.FC = () => {
                                     </div>
                                 )}
 
-                                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                                    <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
-                                        <input
-                                            type="checkbox"
-                                            checked={form.is_active}
-                                            onChange={(e) =>
-                                                setForm((p) => ({
-                                                    ...p,
-                                                    is_active: e.target.checked,
-                                                }))
-                                            }
-                                            className="w-4 h-4 text-[#B00000] border-gray-300 rounded focus:ring-[#B00000]"
-                                        />
-                                        Active
-                                    </label>
+                                <div className="flex flex-col gap-3 pt-4 border-t border-gray-200">
+                                    <div className="flex items-center gap-4">
+                                        <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={form.is_active}
+                                                onChange={(e) =>
+                                                    setForm((p) => ({
+                                                        ...p,
+                                                        is_active: e.target.checked,
+                                                    }))
+                                                }
+                                                className="w-4 h-4 text-[#B00000] border-gray-300 rounded focus:ring-[#B00000]"
+                                            />
+                                            Active
+                                        </label>
 
-                                    <div className="flex items-center gap-3">
+                                        <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={form.is_featured}
+                                                onChange={(e) =>
+                                                    setForm((p) => ({
+                                                        ...p,
+                                                        is_featured: e.target.checked,
+                                                    }))
+                                                }
+                                                className="w-4 h-4 text-[#B00000] border-gray-300 rounded focus:ring-[#B00000]"
+                                            />
+                                            Featured (Landing Page)
+                                        </label>
+                                    </div>
+
+                                    <div className="flex items-center justify-end gap-3">
                                         <button
                                             type="button"
                                             onClick={() => {

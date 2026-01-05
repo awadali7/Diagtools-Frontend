@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, usePathname } from "next/navigation";
-import { User, ChevronDown, LogOut, ShoppingCart } from "lucide-react";
+import { User, ChevronDown, LogOut, ShoppingCart, Menu, X } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import LoginDrawer from "./LoginDrawer";
@@ -20,8 +21,21 @@ export default function Header() {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
     const [isRegisterDrawerOpen, setIsRegisterDrawerOpen] = useState(false);
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const toggleProfile = () => setIsProfileOpen(!isProfileOpen);
+
+    // Prevent body scroll when mobile menu is open
+    React.useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = "hidden";
+        } else {
+            document.body.style.overflow = "unset";
+        }
+        return () => {
+            document.body.style.overflow = "unset";
+        };
+    }, [isMobileMenuOpen]);
 
     // Handle opening login drawer with redirect preservation
     const handleOpenLogin = () => {
@@ -60,6 +74,15 @@ export default function Header() {
     return (
         <header className="fixed top-0 left-0 right-0 z-50 w-full bg-white border-b border-gray-200">
             <div className="flex items-center justify-between px-4 lg:px-8 py-4">
+                {/* Mobile Menu Button */}
+                <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className="lg:hidden p-2 text-gray-700 hover:text-[#B00000] transition-colors"
+                    aria-label="Open Menu"
+                >
+                    <Menu className="w-6 h-6" />
+                </button>
+
                 {/* Left Section - Logo */}
                 <Link href="/" className="flex items-center space-x-3 group">
                     <div className="relative h-8 transition-all duration-300 transform group-hover:scale-105">
@@ -251,7 +274,7 @@ export default function Header() {
                         </div>
                     ) : (
                         /* Login/Register Buttons */
-                        <div className="flex items-center space-x-3">
+                        <div className="hidden lg:flex items-center space-x-3">
                             <button
                                 onClick={handleOpenLogin}
                                 className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-[#B00000] transition-colors"
@@ -268,6 +291,244 @@ export default function Header() {
                     )}
                 </div>
             </div>
+
+            {/* Mobile Menu Drawer */}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <>
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.2 }}
+                            className="fixed inset-0 bg-black/50 z-50 lg:hidden"
+                            onClick={() => setIsMobileMenuOpen(false)}
+                        />
+
+                        {/* Drawer */}
+                        <motion.div
+                            initial={{ x: "-100%" }}
+                            animate={{ x: 0 }}
+                            exit={{ x: "-100%" }}
+                            transition={{
+                                type: "spring",
+                                stiffness: 300,
+                                damping: 30,
+                            }}
+                            className="fixed inset-y-0 left-0 w-full bg-white z-50 lg:hidden shadow-xl"
+                        >
+                            <div className="flex flex-col h-full">
+                                {/* Header */}
+                                <div className="flex items-center justify-between px-6 py-5 border-b border-gray-200">
+                                    <h2 className="text-lg font-semibold text-slate-900">
+                                        Menu
+                                    </h2>
+                                    <button
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                        className="p-2 text-gray-500 hover:text-[#B00000] transition-colors"
+                                        aria-label="Close Menu"
+                                    >
+                                        <X className="w-5 h-5" />
+                                    </button>
+                                </div>
+
+                                {/* Navigation Links */}
+                                <nav className="flex-1 overflow-y-auto py-4">
+                                    <Link
+                                        href="/"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                        className={`block px-6 py-3 text-base font-medium transition-colors ${
+                                            pathname === "/"
+                                                ? "text-[#B00000] bg-red-50"
+                                                : "text-gray-700 hover:text-[#B00000] hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        Home
+                                    </Link>
+                                    <Link
+                                        href="/about"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                        className={`block px-6 py-3 text-base font-medium transition-colors ${
+                                            pathname === "/about"
+                                                ? "text-[#B00000] bg-red-50"
+                                                : "text-gray-700 hover:text-[#B00000] hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        About Us
+                                    </Link>
+                                    <Link
+                                        href="/courses"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                        className={`block px-6 py-3 text-base font-medium transition-colors ${
+                                            pathname === "/courses" ||
+                                            pathname?.startsWith("/courses/")
+                                                ? "text-[#B00000] bg-red-50"
+                                                : "text-gray-700 hover:text-[#B00000] hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        Courses
+                                    </Link>
+                                    <Link
+                                        href="/shop"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                        className={`block px-6 py-3 text-base font-medium transition-colors ${
+                                            pathname === "/shop" ||
+                                            pathname?.startsWith("/shop/")
+                                                ? "text-[#B00000] bg-red-50"
+                                                : "text-gray-700 hover:text-[#B00000] hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        Shop
+                                    </Link>
+                                    <Link
+                                        href="/blog"
+                                        onClick={() =>
+                                            setIsMobileMenuOpen(false)
+                                        }
+                                        className={`block px-6 py-3 text-base font-medium transition-colors ${
+                                            pathname === "/blog" ||
+                                            pathname?.startsWith("/blog/")
+                                                ? "text-[#B00000] bg-red-50"
+                                                : "text-gray-700 hover:text-[#B00000] hover:bg-gray-50"
+                                        }`}
+                                    >
+                                        Blog
+                                    </Link>
+
+                                    {/* User Links (if authenticated) */}
+                                    {isAuth && user && (
+                                        <>
+                                            <div className="mt-6 pt-6 border-t border-gray-200">
+                                                <div className="px-6 mb-3">
+                                                    <p className="text-xs font-semibold text-gray-500 uppercase">
+                                                        My Account
+                                                    </p>
+                                                </div>
+                                                <Link
+                                                    href="/profile"
+                                                    onClick={() =>
+                                                        setIsMobileMenuOpen(
+                                                            false
+                                                        )
+                                                    }
+                                                    className="block px-6 py-3 text-base text-gray-700 hover:text-[#B00000] hover:bg-gray-50 transition-colors"
+                                                >
+                                                    My Profile
+                                                </Link>
+                                                <Link
+                                                    href="/my-learning"
+                                                    onClick={() =>
+                                                        setIsMobileMenuOpen(
+                                                            false
+                                                        )
+                                                    }
+                                                    className="block px-6 py-3 text-base text-gray-700 hover:text-[#B00000] hover:bg-gray-50 transition-colors"
+                                                >
+                                                    My Learning
+                                                </Link>
+                                                <Link
+                                                    href="/orders"
+                                                    onClick={() =>
+                                                        setIsMobileMenuOpen(
+                                                            false
+                                                        )
+                                                    }
+                                                    className="block px-6 py-3 text-base text-gray-700 hover:text-[#B00000] hover:bg-gray-50 transition-colors"
+                                                >
+                                                    My Orders
+                                                </Link>
+                                                <Link
+                                                    href="/downloads"
+                                                    onClick={() =>
+                                                        setIsMobileMenuOpen(
+                                                            false
+                                                        )
+                                                    }
+                                                    className="block px-6 py-3 text-base text-gray-700 hover:text-[#B00000] hover:bg-gray-50 transition-colors"
+                                                >
+                                                    My Downloads
+                                                </Link>
+                                                {user.role === "admin" && (
+                                                    <Link
+                                                        href="/admin"
+                                                        onClick={() =>
+                                                            setIsMobileMenuOpen(
+                                                                false
+                                                            )
+                                                        }
+                                                        className="block px-6 py-3 text-base text-gray-700 hover:text-[#B00000] hover:bg-gray-50 transition-colors"
+                                                    >
+                                                        Admin Dashboard
+                                                    </Link>
+                                                )}
+                                                <Link
+                                                    href="/settings"
+                                                    onClick={() =>
+                                                        setIsMobileMenuOpen(
+                                                            false
+                                                        )
+                                                    }
+                                                    className="block px-6 py-3 text-base text-gray-700 hover:text-[#B00000] hover:bg-gray-50 transition-colors"
+                                                >
+                                                    Settings
+                                                </Link>
+                                            </div>
+                                        </>
+                                    )}
+                                </nav>
+
+                                {/* Footer - Auth Actions */}
+                                <div className="border-t border-gray-200 p-4">
+                                    {isAuth && user ? (
+                                        <button
+                                            onClick={() => {
+                                                setIsMobileMenuOpen(false);
+                                                handleLogout();
+                                            }}
+                                            className="w-full flex items-center justify-center space-x-2 px-4 py-3 bg-gray-100 text-[#B00000] rounded-lg font-medium hover:bg-gray-200 transition-colors"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            <span>Sign Out</span>
+                                        </button>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <button
+                                                onClick={() => {
+                                                    setIsMobileMenuOpen(false);
+                                                    handleOpenLogin();
+                                                }}
+                                                className="w-full px-4 py-3 text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                                            >
+                                                Login
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setIsMobileMenuOpen(false);
+                                                    handleOpenRegister();
+                                                }}
+                                                className="w-full px-4 py-3 bg-[#B00000] text-white rounded-lg font-medium hover:bg-red-800 transition-colors"
+                                            >
+                                                Join Now
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
 
             {/* Login Drawer */}
             <LoginDrawer
