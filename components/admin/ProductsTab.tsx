@@ -23,7 +23,8 @@ type VideoFile = {
 type ProductFormState = {
     name: string;
     slug: string;
-    category: string;
+    category: string;  // Kept for backward compatibility
+    categories: string[];  // Array of up to 4 categories
     description: string;
     product_type: ProductType;
     price: number;
@@ -34,6 +35,7 @@ type ProductFormState = {
     digital_file: File | null;
     images: ImageFile[];
     videos: VideoFile[];
+    quantity_pricing: Array<{ min_qty: number | string; max_qty: number | string | null; price_per_item: number | string }>;
 };
 
 // Helper function to convert file to data URL for preview only
@@ -50,6 +52,7 @@ const defaultForm: ProductFormState = {
     name: "",
     slug: "",
     category: "",
+    categories: ["", "", "", ""],  // 4 category slots
     description: "",
     product_type: "physical",
     price: 0,
@@ -60,6 +63,7 @@ const defaultForm: ProductFormState = {
     digital_file: null,
     images: [],
     videos: [],
+    quantity_pricing: [{ min_qty: "", max_qty: "", price_per_item: "" }],
 };
 
 export const ProductsTab: React.FC = () => {
@@ -135,23 +139,44 @@ export const ProductsTab: React.FC = () => {
             thumbnailPreview: video.thumbnail || null
         }));
         
+        // Prepare categories array (ensure exactly 4 slots)
+        const productCategories = p.categories && p.categories.length > 0 
+            ? p.categories 
+            : (p.category ? [p.category] : []);
+        
+        const categoriesArray = [...productCategories];
+        while (categoriesArray.length < 4) {
+            categoriesArray.push("");
+        }
+        
+        // Prepare quantity pricing array
+        const quantityPricing = (p as any).quantity_pricing && Array.isArray((p as any).quantity_pricing)
+            ? (p as any).quantity_pricing.map((qp: any) => ({
+                min_qty: qp.min_qty || "",
+                max_qty: qp.max_qty || "",
+                price_per_item: qp.price_per_item || ""
+              }))
+            : [{ min_qty: "", max_qty: "", price_per_item: "" }];
+        
         setForm({
             name: p.name,
             slug: p.slug,
-            category: p.category || "",
+            category: productCategories[0] || "",
+            categories: categoriesArray,
             description: p.description || "",
             product_type: p.type,
-            price: Number(p.price || 0),
-            stock_quantity: Number(p.stock_quantity || 0),
+            price: Number(p.price),
+            stock_quantity: p.type === "physical" ? Number(p.stock_quantity || 0) : 0,
             is_active: p.is_active !== false,
-            is_featured: (p as any).is_featured || false,
+            is_featured: p.is_featured || false,
             cover_image: null,
             digital_file: null,
             images: existingImages,
             videos: existingVideos,
+            quantity_pricing: quantityPricing.length > 0 ? quantityPricing : [{ min_qty: "", max_qty: "", price_per_item: "" }],
         });
+        setCategoryInputValue(productCategories[0] || "");
         setSlugManuallyEdited(true);
-        setCategoryInputValue(p.category || "");
         setIsModalOpen(true);
     };
 
@@ -205,12 +230,25 @@ export const ProductsTab: React.FC = () => {
                 .map(video => video.thumbnail)
                 .filter((file): file is File => file !== null);
 
+            // Filter out empty categories
+            const filteredCategories = form.categories.filter(cat => cat && cat.trim());
+            
+            // Filter and prepare tiered pricing
+            const quantityPricing = form.quantity_pricing
+                .filter(tier => tier.min_qty && tier.price_per_item)
+                .map(tier => ({
+                    min_qty: Number(tier.min_qty),
+                    max_qty: tier.max_qty && tier.max_qty !== "" ? Number(tier.max_qty) : null,
+                    price_per_item: Number(tier.price_per_item)
+                }))
+                .filter(tier => !isNaN(tier.min_qty) && !isNaN(tier.price_per_item) && tier.min_qty > 0 && tier.price_per_item > 0);
+            
             if (!editing) {
                 await productsApi.adminCreate({
                     name: form.name,
                     slug: form.slug,
                     description: form.description || undefined,
-                    category: form.category || undefined,
+                    categories: filteredCategories.length > 0 ? filteredCategories : undefined,
                     product_type: form.product_type,
                     price: form.price,
                     stock_quantity: form.stock_quantity,
@@ -221,13 +259,14 @@ export const ProductsTab: React.FC = () => {
                     videos: videoFiles.length > 0 ? videoFiles : undefined,
                     videoTitles: videoTitles.length > 0 ? videoTitles : undefined,
                     videoThumbnails: videoThumbnailFiles.length > 0 ? videoThumbnailFiles : undefined,
+                    quantity_pricing: quantityPricing.length > 0 ? quantityPricing : undefined,
                 });
             } else {
                 await productsApi.adminUpdate(editing.id, {
                     name: form.name,
                     slug: form.slug,
                     description: form.description,
-                    category: form.category,
+                    categories: filteredCategories.length > 0 ? filteredCategories : undefined,
                     product_type: form.product_type,
                     price: form.price,
                     stock_quantity: form.stock_quantity,
@@ -239,6 +278,7 @@ export const ProductsTab: React.FC = () => {
                     videos: videoFiles.length > 0 ? videoFiles : undefined,
                     videoTitles: videoTitles.length > 0 ? videoTitles : undefined,
                     videoThumbnails: videoThumbnailFiles.length > 0 ? videoThumbnailFiles : undefined,
+                    quantity_pricing: quantityPricing.length > 0 ? quantityPricing : undefined,
                 });
             }
 
@@ -506,74 +546,111 @@ export const ProductsTab: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Type *
-                                        </label>
-                                        <select
-                                            value={form.product_type}
-                                            onChange={(e) =>
-                                                setForm((p) => ({
-                                                    ...p,
-                                                    product_type: e.target
-                                                        .value as ProductType,
-                                                }))
-                                            }
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
-                                        >
-                                            <option value="physical">
-                                                Physical
-                                            </option>
-                                            <option value="digital">
-                                                Digital
-                                            </option>
-                                        </select>
-                                    </div>
-                                    <div className="relative">
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                                            Category
-                                        </label>
-                                        <input
-                                            value={categoryInputValue}
-                                            onChange={(e) => {
-                                                const value = e.target.value;
-                                                setCategoryInputValue(value);
-                                                setForm((p) => ({
-                                                    ...p,
-                                                    category: value,
-                                                }));
-                                                setShowCategoryDropdown(true);
-                                            }}
-                                            onFocus={() => setShowCategoryDropdown(true)}
-                                            onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
-                                            placeholder="Type or select category"
-                                        />
-                                        {showCategoryDropdown && existingCategories.length > 0 && (
-                                            <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
-                                                {existingCategories
-                                                    .filter(cat => 
-                                                        !categoryInputValue || 
-                                                        cat.toLowerCase().includes(categoryInputValue.toLowerCase())
-                                                    )
-                                                    .map((cat) => (
-                                                        <button
-                                                            key={cat}
-                                                            type="button"
-                                                            onClick={() => {
-                                                                setCategoryInputValue(cat);
-                                                                setForm((p) => ({ ...p, category: cat }));
-                                                                setShowCategoryDropdown(false);
-                                                            }}
-                                                            className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
-                                                        >
-                                                            {cat}
-                                                        </button>
-                                                    ))}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Type *
+                                    </label>
+                                    <select
+                                        value={form.product_type}
+                                        onChange={(e) =>
+                                            setForm((p) => ({
+                                                ...p,
+                                                product_type: e.target
+                                                    .value as ProductType,
+                                            }))
+                                        }
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
+                                    >
+                                        <option value="physical">
+                                            Physical
+                                        </option>
+                                        <option value="digital">
+                                            Digital
+                                        </option>
+                                    </select>
+                                </div>
+
+                                {/* Category Hierarchy (up to 4 levels) */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        Category Path (Hierarchy) *
+                                        <span className="text-xs font-normal text-gray-500 ml-2">
+                                            e.g., Vehicle › Motorcycle › Yezdi › Indie
+                                        </span>
+                                    </label>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                        {[
+                                            { index: 0, label: "Main Category", placeholder: "e.g., Vehicle" },
+                                            { index: 1, label: "Sub-Category", placeholder: "e.g., Motorcycle" },
+                                            { index: 2, label: "Sub-Sub-Category", placeholder: "e.g., Yezdi" },
+                                            { index: 3, label: "Model/Variant", placeholder: "e.g., Indie" }
+                                        ].map(({ index, label, placeholder }) => (
+                                            <div key={index} className="relative">
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">
+                                                    {label} {index === 0 && <span className="text-red-500">*</span>}
+                                                </label>
+                                                <input
+                                                    value={form.categories[index] || ""}
+                                                    onChange={(e) => {
+                                                        const value = e.target.value;
+                                                        const newCategories = [...form.categories];
+                                                        newCategories[index] = value;
+                                                        setForm((p) => ({
+                                                            ...p,
+                                                            categories: newCategories,
+                                                            category: newCategories[0] || "",
+                                                        }));
+                                                        if (index === 0) {
+                                                            setCategoryInputValue(value);
+                                                            setShowCategoryDropdown(true);
+                                                        }
+                                                    }}
+                                                    onFocus={() => {
+                                                        if (index === 0) {
+                                                            setShowCategoryDropdown(true);
+                                                        }
+                                                    }}
+                                                    onBlur={() => setTimeout(() => setShowCategoryDropdown(false), 200)}
+                                                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
+                                                    placeholder={placeholder}
+                                                />
+                                                {index === 0 && showCategoryDropdown && existingCategories.length > 0 && (
+                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-48 overflow-y-auto">
+                                                        {existingCategories
+                                                            .filter(cat => 
+                                                                !categoryInputValue || 
+                                                                cat.toLowerCase().includes(categoryInputValue.toLowerCase())
+                                                            )
+                                                            .map((cat) => (
+                                                                <button
+                                                                    key={cat}
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const newCategories = [...form.categories];
+                                                                        newCategories[0] = cat;
+                                                                        setCategoryInputValue(cat);
+                                                                        setForm((p) => ({ ...p, categories: newCategories, category: cat }));
+                                                                        setShowCategoryDropdown(false);
+                                                                    }}
+                                                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
+                                                                >
+                                                                    {cat}
+                                                                </button>
+                                                            ))}
+                                                    </div>
+                                                )}
                                             </div>
-                                        )}
+                                        ))}
                                     </div>
+                                    {/* Preview */}
+                                    {form.categories.filter(c => c && c.trim()).length > 0 && (
+                                        <div className="mt-2 p-2 bg-gray-50 rounded-lg border border-gray-200">
+                                            <span className="text-xs text-gray-500">Preview: </span>
+                                            <span className="text-sm font-medium text-[#B00000]">
+                                                {form.categories.filter(c => c && c.trim()).join(' › ')}
+                                            </span>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>
@@ -632,6 +709,109 @@ export const ProductsTab: React.FC = () => {
                                             }
                                             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent disabled:bg-gray-50"
                                         />
+                                    </div>
+                                </div>
+
+                                {/* Tiered Pricing Section */}
+                                <div className="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                                    <h3 className="text-sm font-semibold text-gray-900 mb-2">
+                                        💰 Tiered Pricing (Optional)
+                                    </h3>
+                                    <p className="text-xs text-gray-600 mb-3">
+                                        Set price per item based on quantity ranges. Example: 2-5 items → ₹90 each
+                                    </p>
+                                    
+                                    <div className="space-y-2">
+                                        {form.quantity_pricing.map((tier, index) => {
+                                            const minQty = Number(tier.min_qty) || 0;
+                                            const maxQty = tier.max_qty && tier.max_qty !== "" ? Number(tier.max_qty) : null;
+                                            const pricePerItem = Number(tier.price_per_item) || 0;
+                                            const savingsPerItem = form.price > 0 && pricePerItem > 0 ? form.price - pricePerItem : 0;
+                                            const savingsPercent = form.price > 0 ? Math.round((savingsPerItem / form.price) * 100) : 0;
+                                            
+                                            return (
+                                                <div key={index} className="grid grid-cols-[auto,1fr,auto,auto] gap-2 items-center bg-white p-2 rounded">
+                                                    <div className="flex items-center gap-1">
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            placeholder="Min"
+                                                            value={tier.min_qty}
+                                                            onChange={(e) => {
+                                                                const newPricing = [...form.quantity_pricing];
+                                                                newPricing[index] = { ...newPricing[index], min_qty: e.target.value };
+                                                                setForm(p => ({ ...p, quantity_pricing: newPricing }));
+                                                            }}
+                                                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#B00000] focus:border-transparent"
+                                                        />
+                                                        <span className="text-gray-400 text-xs">to</span>
+                                                        <input
+                                                            type="number"
+                                                            min="1"
+                                                            placeholder="Max (or leave empty)"
+                                                            value={tier.max_qty || ""}
+                                                            onChange={(e) => {
+                                                                const newPricing = [...form.quantity_pricing];
+                                                                newPricing[index] = { ...newPricing[index], max_qty: e.target.value || null };
+                                                                setForm(p => ({ ...p, quantity_pricing: newPricing }));
+                                                            }}
+                                                            className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#B00000] focus:border-transparent"
+                                                        />
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-gray-400 text-xs">→</span>
+                                                        <input
+                                                            type="number"
+                                                            step="0.01"
+                                                            min="0"
+                                                            placeholder="₹/item"
+                                                            value={tier.price_per_item}
+                                                            onChange={(e) => {
+                                                                const newPricing = [...form.quantity_pricing];
+                                                                newPricing[index] = { ...newPricing[index], price_per_item: e.target.value };
+                                                                setForm(p => ({ ...p, quantity_pricing: newPricing }));
+                                                            }}
+                                                            className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#B00000] focus:border-transparent"
+                                                        />
+                                                        <span className="text-xs text-gray-500">/each</span>
+                                                    </div>
+                                                    {minQty > 0 && pricePerItem > 0 && (
+                                                        <div className="text-xs text-gray-600 whitespace-nowrap">
+                                                            {savingsPerItem > 0 && (
+                                                                <span className="text-green-600">Save ₹{savingsPerItem.toFixed(0)} ({savingsPercent}%)</span>
+                                                            )}
+                                                        </div>
+                                                    )}
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            const newPricing = form.quantity_pricing.filter((_, i) => i !== index);
+                                                            setForm(p => ({ ...p, quantity_pricing: newPricing.length > 0 ? newPricing : [{ min_qty: "", max_qty: "", price_per_item: "" }] }));
+                                                        }}
+                                                        className="p-1 text-red-500 hover:bg-red-50 rounded"
+                                                    >
+                                                        <Trash className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
+                                        
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setForm(p => ({
+                                                    ...p,
+                                                    quantity_pricing: [...p.quantity_pricing, { min_qty: "", max_qty: "", price_per_item: "" }]
+                                                }));
+                                            }}
+                                            className="w-full px-3 py-2 text-sm border border-dashed border-gray-300 rounded text-gray-600 hover:border-[#B00000] hover:text-[#B00000] transition-colors"
+                                        >
+                                            + Add Pricing Tier
+                                        </button>
+                                        
+                                        <div className="mt-3 p-2 bg-blue-50 rounded text-xs text-blue-800">
+                                            <strong>Example:</strong> 1-1: ₹100, 2-5: ₹90, 6-10: ₹80, 11+: ₹70 (leave max empty for unlimited)
+                                        </div>
                                     </div>
                                 </div>
 

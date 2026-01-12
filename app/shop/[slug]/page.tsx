@@ -24,6 +24,7 @@ type ShopProductDetails = {
         thumbnail?: string;
     }>;
     category: string;
+    categories?: string[];
     type: ProductType;
     rating: number;
     reviews: number;
@@ -33,6 +34,7 @@ type ShopProductDetails = {
         format?: DigitalFileFormat;
         filename?: string;
     };
+    quantity_pricing?: Array<{ min_qty: number; max_qty: number | null; price_per_item: number }>;
 };
 
 const FALLBACK_IMAGE =
@@ -52,6 +54,7 @@ function mapApiProductToDetails(p: Product): ShopProductDetails {
         images: allImages,
         videos: p.videos || [],
         category: p.category || "Other",
+        categories: p.categories || [],
         type: p.type,
         rating: Number(p.rating ?? 0),
         reviews: Number(p.reviews_count ?? 0),
@@ -71,6 +74,7 @@ function mapApiProductToDetails(p: Product): ShopProductDetails {
                       filename: p.digital_file_name || undefined,
                   }
                 : undefined,
+        quantity_pricing: p.quantity_pricing || undefined,
     };
 }
 
@@ -85,6 +89,8 @@ export default function ProductDetailPage() {
     const [quantity, setQuantity] = useState(1);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [selectedVideo, setSelectedVideo] = useState<{ title: string; url: string } | null>(null);
+    const [calculatedPrice, setCalculatedPrice] = useState(0);
+    const [appliedTier, setAppliedTier] = useState<{min_qty: number; max_qty: number | null; price_per_item: number} | null>(null);
 
     useEffect(() => {
         let mounted = true;
@@ -113,6 +119,32 @@ export default function ProductDetailPage() {
             mounted = false;
         };
     }, [slug]);
+
+    // Calculate price based on quantity and tiered pricing
+    useEffect(() => {
+        if (!product) return;
+        
+        if (!product.quantity_pricing || product.quantity_pricing.length === 0) {
+            setCalculatedPrice(product.price * quantity);
+            setAppliedTier(null);
+            return;
+        }
+        
+        // Find tier that matches this quantity range
+        const tier = product.quantity_pricing.find(t => {
+            const minQty = t.min_qty || 1;
+            const maxQty = t.max_qty || Infinity;
+            return quantity >= minQty && quantity <= maxQty;
+        });
+        
+        if (tier) {
+            setCalculatedPrice(tier.price_per_item * quantity);
+            setAppliedTier(tier);
+        } else {
+            setCalculatedPrice(product.price * quantity);
+            setAppliedTier(null);
+        }
+    }, [quantity, product]);
 
     const specifications = useMemo(() => {
         if (!product) return [];
@@ -162,6 +194,7 @@ export default function ProductDetailPage() {
             type: product.type,
             quantity: finalQty,
             slug: product.slug,
+            quantity_pricing: product.quantity_pricing,
         });
 
         // Open the cart drawer
@@ -257,36 +290,41 @@ export default function ProductDetailPage() {
                 {/* Product Info */}
                 <div className="space-y-6">
                     <div>
-                        <span className="text-sm text-gray-500">
-                            {product.category}
-                        </span>
-                        <h1 className="text-3xl font-bold text-slate-900 mt-2 mb-4">
+                        {/* Category Breadcrumb Path */}
+                        {(product.categories && product.categories.length > 0 
+                            ? product.categories 
+                            : product.category ? [product.category] : []
+                        ).filter(cat => cat && cat.trim()).length > 0 && (
+                            <div className="mb-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                <div className="flex items-center gap-2 text-sm flex-wrap">
+                                    <span className="text-gray-500 font-medium">Category:</span>
+                                    {(product.categories && product.categories.length > 0 
+                                        ? product.categories 
+                                        : product.category ? [product.category] : []
+                                    ).filter(cat => cat && cat.trim()).map((cat, idx, arr) => (
+                                        <React.Fragment key={idx}>
+                                            <span className="text-[#B00000] font-semibold hover:underline cursor-pointer">
+                                                {cat}
+                                            </span>
+                                            {idx < arr.length - 1 && (
+                                                <span className="text-gray-400 text-lg font-light">›</span>
+                                            )}
+                                        </React.Fragment>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <h1 className="text-3xl font-bold text-slate-900 mb-4">
                             {product.name}
                         </h1>
-
-                        {/* Rating */}
-                        <div className="flex items-center space-x-2 mb-4">
-                            <div className="flex items-center">
-                                {[...Array(5)].map((_, i) => (
-                                    <Star
-                                        key={i}
-                                        className={`w-5 h-5 ${
-                                            i < Math.floor(product.rating)
-                                                ? "fill-yellow-400 text-yellow-400"
-                                                : "text-gray-300"
-                                        }`}
-                                    />
-                                ))}
-                            </div>
-                            <span className="text-sm text-gray-600">
-                                {product.rating} ({product.reviews} reviews)
-                            </span>
-                        </div>
 
                         {/* Price */}
                         <div className="mb-6">
                             <p className="text-4xl font-bold text-[#B00000]">
-                                ₹{product.price.toLocaleString()}
+                                ₹{product.price.toLocaleString('en-IN')}
+                                {product.type !== "digital" && quantity > 1 && (
+                                    <span className="text-sm text-gray-500 ml-2">per item</span>
+                                )}
                             </p>
                             <p className="text-sm text-gray-500 mt-1">
                                 {product.type === "digital"
@@ -299,6 +337,49 @@ export default function ProductDetailPage() {
                                     : "Out of Stock"}
                             </p>
                         </div>
+
+                        {/* Tiered Pricing Table */}
+                        {product.type !== "digital" && product.quantity_pricing && product.quantity_pricing.length > 0 && (
+                            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                                <h3 className="font-semibold text-green-900 mb-3 flex items-center gap-2">
+                                    <span>💰</span>
+                                    <span>Tiered Pricing - Buy More, Save More!</span>
+                                </h3>
+                                <div className="space-y-2">
+                                    {product.quantity_pricing
+                                        .sort((a, b) => (a.min_qty || 1) - (b.min_qty || 1))
+                                        .map((tier, idx) => {
+                                            const pricePerItem = tier.price_per_item;
+                                            const savingsPerItem = product.price - pricePerItem;
+                                            const savingsPercent = product.price > 0 ? ((savingsPerItem / product.price) * 100).toFixed(0) : "0";
+                                            const rangeText = tier.max_qty 
+                                                ? `${tier.min_qty}-${tier.max_qty} items`
+                                                : `${tier.min_qty}+ items`;
+                                            
+                                            return (
+                                                <div 
+                                                    key={idx} 
+                                                    className="flex justify-between items-center bg-white p-3 rounded border border-gray-200 hover:border-green-300 transition-colors"
+                                                >
+                                                    <div>
+                                                        <span className="font-bold text-lg">{rangeText}</span>
+                                                    </div>
+                                                    <div className="text-right">
+                                                        <div className="text-xl font-bold text-green-700">
+                                                            ₹{pricePerItem.toLocaleString('en-IN')}/each
+                                                        </div>
+                                                        {savingsPerItem > 0 && (
+                                                            <div className="text-xs text-green-600">
+                                                                Save ₹{savingsPerItem.toLocaleString('en-IN')}/item ({savingsPercent}% off)
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Description */}
                         <p className="text-gray-600 leading-relaxed mb-6">
@@ -329,7 +410,7 @@ export default function ProductDetailPage() {
                                 <label className="block text-sm font-medium text-gray-700 mb-2">
                                     Quantity
                                 </label>
-                                <div className="flex items-center space-x-3">
+                                <div className="flex items-center space-x-3 mb-3">
                                     <button
                                         onClick={() =>
                                             setQuantity(
@@ -351,6 +432,22 @@ export default function ProductDetailPage() {
                                     >
                                         +
                                     </button>
+                                </div>
+                                
+                                {/* Total Price with Discount Display */}
+                                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-sm text-gray-600">Total Price:</span>
+                                        <span className="text-2xl font-bold text-[#B00000]">
+                                            ₹{calculatedPrice.toLocaleString('en-IN')}
+                                        </span>
+                                    </div>
+                                    {appliedTier && (
+                                        <div className="text-sm text-green-600 bg-green-50 px-3 py-2 rounded border border-green-200">
+                                            <span className="font-semibold">🎉 Tiered pricing applied!</span>
+                                            <span className="ml-1">₹{appliedTier.price_per_item}/item - You save ₹{((product.price * quantity) - calculatedPrice).toLocaleString('en-IN')}</span>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         )}

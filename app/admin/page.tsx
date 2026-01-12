@@ -3413,7 +3413,7 @@ export default function AdminPage() {
                                         {/* Video URL */}
                                         <div>
                                             <label className="block text-sm font-medium text-slate-900 mb-2">
-                                                YouTube URL *
+                                                Video URL (YouTube or Vimeo) *
                                             </label>
                                             <input
                                                 type="url"
@@ -3427,7 +3427,7 @@ export default function AdminPage() {
                                                     })
                                                 }
                                                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
-                                                placeholder="https://www.youtube.com/watch?v=..."
+                                                placeholder="YouTube or Vimeo URL (e.g., youtube.com/watch?v=... or vimeo.com/...)"
                                             />
                                         </div>
 

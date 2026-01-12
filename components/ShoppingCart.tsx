@@ -1,11 +1,78 @@
 "use client";
 
-import React from "react";
+import React, { useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { X, Plus, Minus, ShoppingBag } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useCart } from "@/contexts/CartContext";
+import type { CartItem } from "@/contexts/CartContext";
+
+// Helper to calculate price with tiered discount
+function calculateItemPrice(item: CartItem): {
+    finalPrice: number;
+    regularPrice: number;
+    savings: number;
+    appliedTier: { min_qty: number; max_qty: number | null; price_per_item: number } | null;
+} {
+    const regularPrice = item.price * item.quantity;
+    
+    if (!item.quantity_pricing || item.quantity_pricing.length === 0) {
+        return {
+            finalPrice: regularPrice,
+            regularPrice,
+            savings: 0,
+            appliedTier: null,
+        };
+    }
+    
+    // Find tier that matches this quantity range
+    const tier = item.quantity_pricing.find(t => {
+        const minQty = t.min_qty || 1;
+        const maxQty = t.max_qty || Infinity;
+        return item.quantity >= minQty && item.quantity <= maxQty;
+    });
+    
+    if (tier) {
+        const finalPrice = tier.price_per_item * item.quantity;
+        return {
+            finalPrice,
+            regularPrice,
+            savings: regularPrice - finalPrice,
+            appliedTier: tier,
+        };
+    }
+    
+    return {
+        finalPrice: regularPrice,
+        regularPrice,
+        savings: 0,
+        appliedTier: null,
+    };
+}
+
+// Helper to find next tier message
+function getNextTierMessage(item: CartItem): string | null {
+    if (!item.quantity_pricing || item.quantity_pricing.length === 0) return null;
+    
+    // Find the next tier above current quantity
+    const nextTier = item.quantity_pricing
+        .filter(t => (t.min_qty || 1) > item.quantity)
+        .sort((a, b) => (a.min_qty || 1) - (b.min_qty || 1))[0];
+    
+    if (!nextTier) return null;
+    
+    const itemsNeeded = (nextTier.min_qty || 1) - item.quantity;
+    const currentPricePerItem = item.quantity_pricing.find(t => {
+        const minQty = t.min_qty || 1;
+        const maxQty = t.max_qty || Infinity;
+        return item.quantity >= minQty && item.quantity <= maxQty;
+    })?.price_per_item || item.price;
+    
+    const savingsPerItem = currentPricePerItem - nextTier.price_per_item;
+    
+    return `Buy ${itemsNeeded} more to get ₹${nextTier.price_per_item.toLocaleString('en-IN')}/item (save ₹${savingsPerItem.toLocaleString('en-IN')}/item!)`;
+}
 
 export default function ShoppingCart() {
     const {
@@ -16,6 +83,24 @@ export default function ShoppingCart() {
         isOpen,
         setIsOpen,
     } = useCart();
+
+    // Calculate total with bulk discounts
+    const { subtotal, totalSavings, finalTotal } = useMemo(() => {
+        let subtotal = 0;
+        let totalSavings = 0;
+        
+        items.forEach(item => {
+            const { finalPrice, savings } = calculateItemPrice(item);
+            subtotal += finalPrice;
+            totalSavings += savings;
+        });
+        
+        return {
+            subtotal,
+            totalSavings,
+            finalTotal: subtotal,
+        };
+    }, [items]);
 
     return (
         <AnimatePresence>
@@ -74,7 +159,11 @@ export default function ShoppingCart() {
                         </div>
                     ) : (
                         <div className="space-y-4">
-                            {items.map((item) => (
+                            {items.map((item) => {
+                                const priceInfo = calculateItemPrice(item);
+                                const nextTierMsg = getNextTierMessage(item);
+                                
+                                return (
                                 <div
                                     key={item.id}
                                     className="flex items-start space-x-4 p-4 border border-gray-200 rounded-lg"
@@ -99,10 +188,38 @@ export default function ShoppingCart() {
                                                 ? "Digital Product"
                                                 : "Course"}
                                         </p>
+                                        
+                                        {/* Price Display with Discount */}
+                                        <div className="mb-2">
+                                            {priceInfo.appliedTier ? (
+                                                <div className="space-y-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-xs text-gray-400 line-through">
+                                                            ₹{priceInfo.regularPrice.toLocaleString('en-IN')}
+                                                        </span>
+                                                        <span className="text-sm font-bold text-green-700">
+                                                            ₹{priceInfo.finalPrice.toLocaleString('en-IN')}
+                                                        </span>
+                                                    </div>
+                                                    <div className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded inline-block">
+                                                        🎉 Save ₹{priceInfo.savings.toLocaleString('en-IN')}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-sm font-semibold text-[#B00000]">
+                                                    ₹{item.price.toFixed(2)} × {item.quantity} = ₹{priceInfo.finalPrice.toLocaleString('en-IN')}
+                                                </p>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Next Tier Message */}
+                                        {nextTierMsg && (
+                                            <div className="mb-2 text-xs bg-yellow-50 border border-yellow-300 rounded p-2 text-yellow-800">
+                                                <span className="font-semibold">💡 {nextTierMsg}</span>
+                                            </div>
+                                        )}
+                                        
                                         <div className="flex items-center justify-between">
-                                            <p className="text-sm font-semibold text-[#B00000]">
-                                                ₹{item.price.toFixed(2)}
-                                            </p>
                                             <div className="flex items-center space-x-2">
                                                 <button
                                                     onClick={() =>
@@ -139,7 +256,7 @@ export default function ShoppingCart() {
                                         <X className="w-4 h-4" />
                                     </button>
                                 </div>
-                            ))}
+                            )})}
                         </div>
                     )}
                 </div>
@@ -147,14 +264,39 @@ export default function ShoppingCart() {
                 {/* Footer */}
                 {items.length > 0 && (
                     <div className="border-t border-gray-200 p-6 space-y-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-lg font-semibold text-slate-900">
-                                Total:
-                            </span>
-                            <span className="text-xl font-bold text-[#B00000]">
-                                ₹{getTotalPrice().toFixed(2)}
-                            </span>
+                        <div className="space-y-2">
+                            <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-600">Subtotal:</span>
+                                <span className="font-semibold text-slate-900">
+                                    ₹{subtotal.toLocaleString('en-IN')}
+                                </span>
+                            </div>
+                            
+                            {totalSavings > 0 && (
+                                <div className="flex items-center justify-between text-sm bg-green-50 px-3 py-2 rounded border border-green-200">
+                                    <span className="text-green-700 font-medium">Bulk Discount:</span>
+                                    <span className="text-green-700 font-bold">
+                                        -₹{totalSavings.toLocaleString('en-IN')}
+                                    </span>
+                                </div>
+                            )}
+                            
+                            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+                                <span className="text-lg font-semibold text-slate-900">
+                                    Total:
+                                </span>
+                                <span className="text-xl font-bold text-[#B00000]">
+                                    ₹{finalTotal.toLocaleString('en-IN')}
+                                </span>
+                            </div>
+                            
+                            {totalSavings > 0 && (
+                                <div className="bg-green-100 p-2 rounded text-center text-sm text-green-800 font-medium">
+                                    🎉 You saved ₹{totalSavings.toLocaleString('en-IN')} with bulk pricing!
+                                </div>
+                            )}
                         </div>
+                        
                         <Link
                             href="/checkout"
                             onClick={() => setIsOpen(false)}

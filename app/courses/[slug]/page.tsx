@@ -112,17 +112,18 @@ export default function CourseDetailPage() {
         }
     }, []);
 
-    // Block clipboard operations to prevent copying video URLs
+    // Block clipboard operations to prevent copying video URLs (YouTube and Vimeo)
     useEffect(() => {
         const handleCopy = (e: ClipboardEvent) => {
-            // Block copying if it contains YouTube URLs
+            // Block copying if it contains video platform URLs
             const selection = window.getSelection()?.toString() || "";
             const clipboardData = e.clipboardData;
 
             if (
                 selection.includes("youtube.com") ||
                 selection.includes("youtu.be") ||
-                selection.includes("youtube-nocookie.com")
+                selection.includes("youtube-nocookie.com") ||
+                selection.includes("vimeo.com")
             ) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -135,7 +136,8 @@ export default function CourseDetailPage() {
                 if (
                     pastedData.includes("youtube.com") ||
                     pastedData.includes("youtu.be") ||
-                    pastedData.includes("youtube-nocookie.com")
+                    pastedData.includes("youtube-nocookie.com") ||
+                    pastedData.includes("vimeo.com")
                 ) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -160,7 +162,8 @@ export default function CourseDetailPage() {
                 if (
                     selection.includes("youtube.com") ||
                     selection.includes("youtu.be") ||
-                    selection.includes("youtube-nocookie.com")
+                    selection.includes("youtube-nocookie.com") ||
+                    selection.includes("vimeo.com")
                 ) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -617,10 +620,26 @@ export default function CourseDetailPage() {
             // Check for KYC or Terms requirement errors
             // The API client returns the error response in err.response.data or directly in err
             const errorResponse = err?.response?.data || err?.data || err || {};
+            const errorMessage = errorResponse.message || err?.message || "";
 
+            // Check if user already has access to the course
             if (
-                errorResponse.requires_kyc ||
-                errorResponse.requires_terms_acceptance
+                errorResponse.already_purchased === true ||
+                errorMessage.toLowerCase().includes("already have access") ||
+                errorMessage.toLowerCase().includes("already purchased")
+            ) {
+                // User already has access - refresh page to update UI
+                alert(
+                    "✅ You already have access to this course!\n\nRefreshing page..."
+                );
+                window.location.reload();
+                return;
+            }
+
+            // Check for KYC or Terms requirement errors ONLY if those flags are explicitly set
+            if (
+                errorResponse.requires_kyc === true ||
+                errorResponse.requires_terms_acceptance === true
             ) {
                 // Redirect to KYC page with redirect path
                 setRedirectPath(`/courses/${slug}`);
@@ -629,11 +648,7 @@ export default function CourseDetailPage() {
             }
 
             // Show generic error for other cases
-            const errorMessage =
-                errorResponse.message ||
-                err?.message ||
-                "Purchase failed. Please try again.";
-            alert(errorMessage);
+            alert(errorMessage || "Purchase failed. Please try again.");
         }
     };
 
@@ -768,47 +783,101 @@ export default function CourseDetailPage() {
         return null;
     };
 
-    // Get video URL for iframe embed (returns YouTube embed URL)
+    // Detect video platform (YouTube or Vimeo)
+    const detectVideoPlatform = (
+        url: string
+    ): "youtube" | "vimeo" | "unknown" => {
+        if (!url) return "unknown";
+        const urlLower = url.toLowerCase();
+
+        if (
+            urlLower.includes("youtube.com") ||
+            urlLower.includes("youtu.be") ||
+            urlLower.includes("youtube-nocookie.com")
+        ) {
+            return "youtube";
+        }
+
+        if (urlLower.includes("vimeo.com")) {
+            return "vimeo";
+        }
+
+        return "unknown";
+    };
+
+    // Extract Vimeo video ID from URL
+    const extractVimeoId = (url: string): string | null => {
+        // Handle player.vimeo.com/video/ID format
+        const playerMatch = url.match(/player\.vimeo\.com\/video\/(\d+)/);
+        if (playerMatch && playerMatch[1]) {
+            return playerMatch[1];
+        }
+        
+        // Handle vimeo.com/ID format (including channels, groups)
+        const regExp =
+            /(?:vimeo\.com\/(?:channels\/(?:\w+\/)?|groups\/(?:[^/]*)\/videos\/|video\/|)(\d+)(?:|\/\?))/;
+        const match = url.match(regExp);
+        return match ? match[1] : null;
+    };
+
+    // Get video URL for iframe embed (supports both YouTube and Vimeo)
     const getVideoUrl = (video: Video): string => {
         const videoUrl = (video as any).video_url || video.youtube_url || "";
         if (!videoUrl) return "";
 
-        // Extract video ID and return embed URL
-        const videoId = extractYouTubeId(videoUrl);
-        if (videoId) {
-            // Use youtube-nocookie.com to remove Share and Watch Later buttons
-            // This privacy-enhanced mode replaces them with a single "Copy Link" button
-            return `https://www.youtube-nocookie.com/embed/${videoId}?modestbranding=1&rel=0&controls=1&fs=1&cc_load_policy=0&iv_load_policy=3&playsinline=1`;
+        const platform = detectVideoPlatform(videoUrl);
+
+        // Handle Vimeo videos
+        if (platform === "vimeo") {
+            const videoId = extractVimeoId(videoUrl);
+            if (videoId) {
+                // Vimeo embed with privacy options
+                return `https://player.vimeo.com/video/${videoId}?title=0&byline=0&portrait=0&dnt=1`;
+            }
+            // If already an embed URL, return as is
+            if (videoUrl.includes("player.vimeo.com")) {
+                return videoUrl;
+            }
+            return videoUrl;
         }
 
-        // If already an embed URL, convert to youtube-nocookie.com
-        if (videoUrl && videoUrl.includes("embed")) {
-            try {
-                let urlToParse = videoUrl.startsWith("http")
-                    ? videoUrl
-                    : `https://${videoUrl}`;
+        // Handle YouTube videos (existing logic)
+        if (platform === "youtube") {
+            const videoId = extractYouTubeId(videoUrl);
+            if (videoId) {
+                // Use youtube-nocookie.com to remove Share and Watch Later buttons
+                return `https://www.youtube-nocookie.com/embed/${videoId}?modestbranding=1&rel=0&controls=1&fs=1&cc_load_policy=0&iv_load_policy=3&playsinline=1`;
+            }
 
-                urlToParse = urlToParse.replace(
-                    /youtube\.com\/embed\//g,
-                    "youtube-nocookie.com/embed/"
-                );
+            // If already an embed URL, convert to youtube-nocookie.com
+            if (videoUrl.includes("embed")) {
+                try {
+                    let urlToParse = videoUrl.startsWith("http")
+                        ? videoUrl
+                        : `https://${videoUrl}`;
 
-                const url = new URL(urlToParse);
-                url.searchParams.set("modestbranding", "1");
-                url.searchParams.set("rel", "0");
-                url.searchParams.set("controls", "1");
-                url.searchParams.set("fs", "1");
-                url.searchParams.set("cc_load_policy", "0");
-                url.searchParams.set("iv_load_policy", "3");
-                url.searchParams.set("playsinline", "1");
-                return url.toString();
-            } catch (e) {
-                let processedUrl = videoUrl.replace(
-                    /youtube\.com\/embed\//g,
-                    "youtube-nocookie.com/embed/"
-                );
-                const separator = processedUrl.includes("?") ? "&" : "?";
-                return `${processedUrl}${separator}modestbranding=1&rel=0&controls=1&fs=1&cc_load_policy=0&iv_load_policy=3&playsinline=1`;
+                    urlToParse = urlToParse.replace(
+                        /youtube\.com\/embed\//g,
+                        "youtube-nocookie.com/embed/"
+                    );
+
+                    const url = new URL(urlToParse);
+                    url.searchParams.set("modestbranding", "1");
+                    url.searchParams.set("rel", "0");
+                    url.searchParams.set("controls", "1");
+                    url.searchParams.set("fs", "1");
+                    url.searchParams.set("cc_load_policy", "0");
+                    url.searchParams.set("iv_load_policy", "3");
+                    url.searchParams.set("playsinline", "1");
+                    return url.toString();
+                } catch (e) {
+                    let processedUrl = videoUrl.replace(
+                        /youtube\.com\/embed\//g,
+                        "youtube-nocookie.com/embed/"
+                    );
+                    const separator = processedUrl.includes("?") ? "&" : "?";
+                    return `${processedUrl}${separator}modestbranding=1&rel=0&controls=1&fs=1&cc_load_policy=0&iv_load_policy=3&playsinline=1`;
+                }
             }
         }
 

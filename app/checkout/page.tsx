@@ -328,9 +328,8 @@ export default function CheckoutPage() {
         }
     };
 
-    const shippingCost = hasPhysicalItems ? 200 : 0;
     const subtotal = getTotalPrice();
-    const total = subtotal + shippingCost;
+    const total = subtotal; // No shipping charges
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -650,9 +649,23 @@ export default function CheckoutPage() {
                                         </p>
                                         <p className="text-sm font-semibold text-[#B00000] mt-1">
                                             ₹
-                                            {(
-                                                item.price * item.quantity
-                                            ).toFixed(2)}
+                                            {(() => {
+                                                // Apply tiered pricing if available
+                                                if (item.quantity_pricing && item.quantity_pricing.length > 0) {
+                                                    const tier = item.quantity_pricing.find(t => {
+                                                        const minQty = t.min_qty || 1;
+                                                        const maxQty = t.max_qty || Infinity;
+                                                        return item.quantity >= minQty && item.quantity <= maxQty;
+                                                    });
+                                                    
+                                                    if (tier) {
+                                                        return (tier.price_per_item * item.quantity).toFixed(2);
+                                                    }
+                                                }
+                                                
+                                                // Fallback to base price
+                                                return (item.price * item.quantity).toFixed(2);
+                                            })()}
                                         </p>
                                     </div>
                                 </div>
@@ -665,16 +678,6 @@ export default function CheckoutPage() {
                                     ₹{subtotal.toFixed(2)}
                                 </span>
                             </div>
-                            {shippingCost > 0 && (
-                                <div className="flex items-center justify-between text-sm">
-                                    <span className="text-gray-600">
-                                        Shipping
-                                    </span>
-                                    <span className="text-slate-900">
-                                        ₹{shippingCost.toFixed(2)}
-                                    </span>
-                                </div>
-                            )}
                             <div className="flex items-center justify-between text-lg font-bold pt-2 border-t border-gray-200">
                                 <span className="text-slate-900">Total</span>
                                 <span className="text-[#B00000]">

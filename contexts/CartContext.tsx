@@ -16,6 +16,7 @@ export interface CartItem {
     type: "physical" | "digital" | "course";
     quantity: number;
     slug?: string;
+    quantity_pricing?: Array<{ min_qty: number; max_qty: number | null; price_per_item: number }>;
 }
 
 interface CartContextType {
@@ -63,7 +64,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
             if (existingItem) {
                 return prevItems.map((i) =>
                     i.id === item.id
-                        ? { ...i, quantity: i.quantity + item.quantity }
+                        ? { 
+                            ...i, 
+                            ...item, // Merge new item data (including quantity_pricing)
+                            quantity: i.quantity + item.quantity 
+                        }
                         : i
                 );
             }
@@ -90,10 +95,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
 
     const getTotalPrice = () => {
-        return items.reduce(
-            (total, item) => total + item.price * item.quantity,
-            0
-        );
+        return items.reduce((total, item) => {
+            // Apply tiered pricing if available
+            if (item.quantity_pricing && item.quantity_pricing.length > 0) {
+                const tier = item.quantity_pricing.find(t => {
+                    const minQty = t.min_qty || 1;
+                    const maxQty = t.max_qty || Infinity;
+                    return item.quantity >= minQty && item.quantity <= maxQty;
+                });
+                
+                if (tier) {
+                    return total + (tier.price_per_item * item.quantity);
+                }
+            }
+            
+            // Fallback to base price if no tier applies
+            return total + (item.price * item.quantity);
+        }, 0);
     };
 
     const getItemCount = () => {

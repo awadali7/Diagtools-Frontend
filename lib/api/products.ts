@@ -37,6 +37,7 @@ export const productsApi = {
         slug: string;
         description?: string;
         category?: string;
+        categories?: string[];
         product_type: ProductType;
         price: number;
         stock_quantity?: number;
@@ -49,12 +50,17 @@ export const productsApi = {
         videos?: File[];
         videoTitles?: string[];
         videoThumbnails?: File[];
+        quantity_pricing?: Array<{ min_qty: number; max_qty: number | null; price_per_item: number }>;
     }): Promise<ApiResponse<Product>> => {
         const form = new FormData();
         form.append("name", data.name);
         form.append("slug", data.slug);
         if (data.description) form.append("description", data.description);
         if (data.category) form.append("category", data.category);
+        // Send categories as JSON string
+        if (data.categories && data.categories.length > 0) {
+            form.append("categories", JSON.stringify(data.categories));
+        }
         form.append("product_type", data.product_type);
         form.append("price", String(data.price));
         if (data.rating !== undefined)
@@ -97,6 +103,11 @@ export const productsApi = {
             });
         }
         
+        // Append quantity pricing as JSON string
+        if (data.quantity_pricing && data.quantity_pricing.length > 0) {
+            form.append("quantity_pricing", JSON.stringify(data.quantity_pricing));
+        }
+        
         return apiClient.post<Product>("/products/admin", form);
     },
 
@@ -107,6 +118,7 @@ export const productsApi = {
             slug: string;
             description: string;
             category: string;
+            categories: string[];
             product_type: ProductType;
             price: number;
             stock_quantity: number;
@@ -120,18 +132,23 @@ export const productsApi = {
             videos?: File[];
             videoTitles?: string[];
             videoThumbnails?: File[];
+            quantity_pricing?: Array<{ min_qty: number; max_qty: number | null; price_per_item: number }>;
         }>
     ): Promise<ApiResponse<Product>> => {
         const form = new FormData();
         Object.entries(data).forEach(([k, v]) => {
             if (v === undefined || v === null) return;
             if (v instanceof File) return;
-            if (k === "images" || k === "videos" || k === "videoTitles" || k === "videoThumbnails") {
+            if (k === "images" || k === "videos" || k === "videoTitles" || k === "videoThumbnails" || k === "categories" || k === "quantity_pricing") {
                 // Skip these, handle separately
                 return;
             }
             form.append(k, String(v));
         });
+        // Handle categories separately (as JSON string)
+        if (data.categories && data.categories.length > 0) {
+            form.append("categories", JSON.stringify(data.categories));
+        }
         if (data.cover_image instanceof File) {
             form.append("cover_image", data.cover_image);
         }
@@ -165,6 +182,11 @@ export const productsApi = {
             data.videoThumbnails.forEach((file) => {
                 if (file) form.append("video_thumbnails", file);
             });
+        }
+        
+        // Append quantity pricing as JSON string
+        if (data.quantity_pricing && data.quantity_pricing.length > 0) {
+            form.append("quantity_pricing", JSON.stringify(data.quantity_pricing));
         }
         
         return apiClient.put<Product>(`/products/admin/${id}`, form);
