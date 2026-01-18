@@ -43,6 +43,7 @@ import { coursesApi } from "@/lib/api/courses";
 import { blogsApi } from "@/lib/api/blogs";
 import { uploadsApi } from "@/lib/api/uploads";
 import { kycApi } from "@/lib/api/kyc";
+import { productKycApi } from "@/lib/api/product-kyc";
 import { AdminTabs } from "@/components/admin/AdminTabs";
 import { DashboardTab } from "@/components/admin/DashboardTab";
 import { UsersTab } from "@/components/admin/UsersTab";
@@ -50,9 +51,11 @@ import { RequestsTab } from "@/components/admin/RequestsTab";
 import { CoursesTab } from "@/components/admin/CoursesTab";
 import { BlogsTab } from "@/components/admin/BlogsTab";
 import { KYCTab } from "@/components/admin/KYCTab";
+import { ProductKYCTab } from "@/components/admin/ProductKYCTab";
 import { ProductsTab } from "@/components/admin/ProductsTab";
 import { OrdersTab } from "@/components/admin/OrdersTab";
 import { KYCModal } from "@/components/admin/KYCModal";
+import { ProductKYCModal } from "@/components/admin/ProductKYCModal";
 import { GrantAccessModal } from "@/components/admin/GrantAccessModal";
 import { formatDate, generateSlug } from "@/components/admin/utils";
 import { StatusBadge } from "@/components/admin/StatusBadge";
@@ -64,6 +67,7 @@ import type {
     Video,
     BlogPost,
     KYCVerification,
+    ProductKYCVerification,
 } from "@/lib/api/types";
 
 export default function AdminPage() {
@@ -77,6 +81,7 @@ export default function AdminPage() {
         | "courses"
         | "blogs"
         | "kyc"
+        | "product_kyc"
         | "products"
         | "orders"
     >("dashboard");
@@ -88,6 +93,9 @@ export default function AdminPage() {
     const [kycApplications, setKycApplications] = useState<KYCVerification[]>(
         []
     );
+    const [productKycApplications, setProductKycApplications] = useState<
+        ProductKYCVerification[]
+    >([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -228,6 +236,21 @@ export default function AdminPage() {
     const [kycSuccess, setKycSuccess] = useState<string | null>(null);
     const [kycError, setKycError] = useState<string | null>(null);
 
+    // Product KYC modal states
+    const [isProductKycModalOpen, setIsProductKycModalOpen] = useState(false);
+    const [selectedProductKyc, setSelectedProductKyc] =
+        useState<ProductKYCVerification | null>(null);
+    const [isProcessingProductKyc, setIsProcessingProductKyc] = useState(false);
+    const [productKycAction, setProductKycAction] = useState<
+        "verify" | "reject" | null
+    >(null);
+    const [productKycRejectionReason, setProductKycRejectionReason] =
+        useState("");
+    const [productKycSuccess, setProductKycSuccess] = useState<string | null>(
+        null
+    );
+    const [productKycError, setProductKycError] = useState<string | null>(null);
+
     // Check admin access
     useEffect(() => {
         if (!authLoading) {
@@ -312,6 +335,24 @@ export default function AdminPage() {
                         setKycApplications(kycData.kyc_verifications);
                     } else if (Array.isArray(kycData as any)) {
                         setKycApplications(kycData as any);
+                    }
+                }
+            } else if (activeTab === "product_kyc") {
+                const productKycResponse = await productKycApi.getAll({
+                    page: 1,
+                    limit: 50,
+                });
+                if (productKycResponse.success && productKycResponse.data) {
+                    const productKycData = productKycResponse.data;
+                    if (
+                        productKycData.kyc_verifications &&
+                        Array.isArray(productKycData.kyc_verifications)
+                    ) {
+                        setProductKycApplications(
+                            productKycData.kyc_verifications
+                        );
+                    } else if (Array.isArray(productKycData as any)) {
+                        setProductKycApplications(productKycData as any);
                     }
                 }
             }
@@ -567,6 +608,96 @@ export default function AdminPage() {
             setKycError(err.message || `Failed to ${kycAction} KYC`);
         } finally {
             setIsProcessingKyc(false);
+        }
+    };
+
+    // Product KYC handlers
+    const handleViewProductKyc = async (kyc: ProductKYCVerification) => {
+        try {
+            const response = await productKycApi.getById(kyc.id);
+            if (response.success && response.data) {
+                setSelectedProductKyc(response.data);
+                setIsProductKycModalOpen(true);
+                setProductKycAction(null);
+                setProductKycRejectionReason("");
+                setProductKycError(null);
+                setProductKycSuccess(null);
+            }
+        } catch (err: any) {
+            setError(err.message || "Failed to load Product KYC details");
+        }
+    };
+
+    const handleVerifyProductKyc = (kyc: ProductKYCVerification) => {
+        setSelectedProductKyc(kyc);
+        setProductKycAction("verify");
+        setProductKycRejectionReason("");
+        setProductKycError(null);
+        setProductKycSuccess(null);
+        setIsProductKycModalOpen(true);
+    };
+
+    const handleRejectProductKyc = (kyc: ProductKYCVerification) => {
+        setSelectedProductKyc(kyc);
+        setProductKycAction("reject");
+        setProductKycRejectionReason("");
+        setProductKycError(null);
+        setProductKycSuccess(null);
+        setIsProductKycModalOpen(true);
+    };
+
+    const handleProductKycAction = async () => {
+        if (!selectedProductKyc || !productKycAction) return;
+
+        if (
+            productKycAction === "reject" &&
+            !productKycRejectionReason.trim()
+        ) {
+            setProductKycError("Rejection reason is required");
+            return;
+        }
+
+        setIsProcessingProductKyc(true);
+        setProductKycError(null);
+        setProductKycSuccess(null);
+
+        try {
+            const response = await productKycApi.verify(selectedProductKyc.id, {
+                status: productKycAction === "verify" ? "verified" : "rejected",
+                rejection_reason:
+                    productKycAction === "reject"
+                        ? productKycRejectionReason
+                        : undefined,
+            });
+
+            if (response.success) {
+                setProductKycSuccess(
+                    `Product KYC ${
+                        productKycAction === "verify" ? "verified" : "rejected"
+                    } successfully!`
+                );
+                // Refresh Product KYC list and close modal after 1.5 seconds
+                await fetchData();
+                setTimeout(() => {
+                    setIsProductKycModalOpen(false);
+                    setSelectedProductKyc(null);
+                    setProductKycAction(null);
+                    setProductKycRejectionReason("");
+                    setProductKycSuccess(null);
+                    setProductKycError(null);
+                }, 1500);
+            } else {
+                setProductKycError(
+                    (response as any).message ||
+                        `Failed to ${productKycAction} Product KYC`
+                );
+            }
+        } catch (err: any) {
+            setProductKycError(
+                err.message || `Failed to ${productKycAction} Product KYC`
+            );
+        } finally {
+            setIsProcessingProductKyc(false);
         }
     };
 
@@ -1668,6 +1799,15 @@ export default function AdminPage() {
                         onViewKyc={handleViewKyc}
                         onVerifyKyc={handleVerifyKyc}
                         onRejectKyc={handleRejectKyc}
+                    />
+                )}
+
+                {activeTab === "product_kyc" && (
+                    <ProductKYCTab
+                        kycApplications={productKycApplications}
+                        onViewKyc={handleViewProductKyc}
+                        onVerifyKyc={handleVerifyProductKyc}
+                        onRejectKyc={handleRejectProductKyc}
                     />
                 )}
             </div>
@@ -4488,6 +4628,40 @@ export default function AdminPage() {
                     setKycAction(null);
                     setRejectionReason("");
                     setKycError(null);
+                }}
+            />
+
+            {/* Product KYC Detail Modal */}
+            <ProductKYCModal
+                isOpen={isProductKycModalOpen}
+                kyc={selectedProductKyc}
+                kycAction={productKycAction}
+                rejectionReason={productKycRejectionReason}
+                isProcessing={isProcessingProductKyc}
+                success={productKycSuccess}
+                error={productKycError}
+                onClose={() => {
+                    setIsProductKycModalOpen(false);
+                    setSelectedProductKyc(null);
+                    setProductKycAction(null);
+                    setProductKycRejectionReason("");
+                    setProductKycError(null);
+                    setProductKycSuccess(null);
+                }}
+                onVerify={() => {
+                    if (selectedProductKyc)
+                        handleVerifyProductKyc(selectedProductKyc);
+                }}
+                onReject={() => {
+                    if (selectedProductKyc)
+                        handleRejectProductKyc(selectedProductKyc);
+                }}
+                onAction={handleProductKycAction}
+                onRejectionReasonChange={setProductKycRejectionReason}
+                onCancelAction={() => {
+                    setProductKycAction(null);
+                    setProductKycRejectionReason("");
+                    setProductKycError(null);
                 }}
             />
         </div>

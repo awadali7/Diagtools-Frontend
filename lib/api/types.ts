@@ -342,7 +342,7 @@ export interface UpdateBlogPostRequest {
     is_published?: boolean;
 }
 
-// KYC Types
+// KYC Types (Course KYC)
 export interface KYCVerification {
     id: string;
     user_id: string;
@@ -353,6 +353,28 @@ export interface KYCVerification {
     whatsapp_number: string;
     id_proof_url: string;
     profile_photo_url: string;
+    status: "pending" | "verified" | "rejected";
+    rejection_reason?: string;
+    verified_by?: string;
+    verified_at?: string;
+    created_at?: string;
+    updated_at?: string;
+    user_email?: string;
+    user_first_name?: string;
+    user_last_name?: string;
+    verifier_email?: string;
+}
+
+// Product KYC Types
+export interface ProductKYCVerification {
+    id: string;
+    user_id: string;
+    full_name: string;
+    address: string;
+    contact_number: string;
+    whatsapp_number: string;
+    id_proofs: string[]; // Array of ID proof URLs (minimum 2)
+    business_proofs: string[]; // Array of business proof URLs (optional)
     status: "pending" | "verified" | "rejected";
     rejection_reason?: string;
     verified_by?: string;
@@ -408,6 +430,7 @@ export interface Product {
     reviews_count?: number;
     is_active?: boolean;
     is_coming_soon?: boolean;
+    requires_kyc?: boolean; // Product requires KYC verification to purchase
     created_at?: string;
     updated_at?: string;
 

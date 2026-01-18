@@ -32,6 +32,7 @@ type ProductFormState = {
     is_active: boolean;
     is_featured: boolean;
     is_coming_soon: boolean;
+    requires_kyc: boolean;
     cover_image: File | null;
     digital_file: File | null;
     images: ImageFile[];
@@ -61,6 +62,7 @@ const defaultForm: ProductFormState = {
     is_active: true,
     is_featured: false,
     is_coming_soon: false,
+    requires_kyc: false,
     cover_image: null,
     digital_file: null,
     images: [],
@@ -172,6 +174,7 @@ export const ProductsTab: React.FC = () => {
             is_active: p.is_active !== false,
             is_featured: p.is_featured || false,
             is_coming_soon: (p as any).is_coming_soon || false,
+            requires_kyc: p.requires_kyc || false,
             cover_image: null,
             digital_file: null,
             images: existingImages,
@@ -257,6 +260,7 @@ export const ProductsTab: React.FC = () => {
                     stock_quantity: form.stock_quantity,
                     is_featured: form.is_featured,
                     is_coming_soon: form.is_coming_soon,
+                    requires_kyc: form.requires_kyc,
                     cover_image: form.cover_image,
                     digital_file: form.digital_file,
                     images: imageFiles.length > 0 ? imageFiles : undefined,
@@ -277,6 +281,7 @@ export const ProductsTab: React.FC = () => {
                     is_active: form.is_active,
                     is_featured: form.is_featured,
                     is_coming_soon: form.is_coming_soon,
+                    requires_kyc: form.requires_kyc,
                     cover_image: form.cover_image,
                     digital_file: form.digital_file,
                     images: imageFiles.length > 0 ? imageFiles : undefined,
@@ -1072,6 +1077,21 @@ export const ProductsTab: React.FC = () => {
                                                 className="w-4 h-4 text-[#B00000] border-gray-300 rounded focus:ring-[#B00000]"
                                             />
                                             Coming Soon 🚀
+                                        </label>
+
+                                        <label className="inline-flex items-center gap-2 text-sm font-medium text-gray-700">
+                                            <input
+                                                type="checkbox"
+                                                checked={form.requires_kyc}
+                                                onChange={(e) =>
+                                                    setForm((p) => ({
+                                                        ...p,
+                                                        requires_kyc: e.target.checked,
+                                                    }))
+                                                }
+                                                className="w-4 h-4 text-[#B00000] border-gray-300 rounded focus:ring-[#B00000]"
+                                            />
+                                            Requires KYC 🔒
                                         </label>
                                     </div>
 

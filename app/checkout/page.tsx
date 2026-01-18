@@ -324,6 +324,17 @@ export default function CheckoutPage() {
             setIsProcessingPayment(false); // Modal opened, user can interact
         } catch (err: any) {
             setIsProcessingPayment(false);
+            
+            // Check for Product KYC requirement errors
+            const errorResponse = err?.response?.data || err?.data || err || {};
+            
+            if (errorResponse.requires_product_kyc) {
+                // Redirect to Product KYC page with redirect path
+                alert(errorResponse.message || "Product KYC verification is required to complete this purchase.");
+                router.push(`/kyc/product?redirect=/checkout`);
+                return;
+            }
+            
             alert(err?.message || "Checkout failed");
         }
     };
