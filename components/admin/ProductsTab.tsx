@@ -6,6 +6,7 @@ import { productsApi } from "@/lib/api/products";
 import { adminApi } from "@/lib/api/admin";
 import type { Product, ProductType, User, ProductVideo } from "@/lib/api/types";
 import { generateSlug } from "./utils";
+import { ImageCropper } from "@/components/ui/ImageCropper";
 
 type ImageFile = {
     file: File | null;
@@ -89,7 +90,53 @@ export const ProductsTab: React.FC = () => {
     const [slugManuallyEdited, setSlugManuallyEdited] = useState(false);
     const [existingCategories, setExistingCategories] = useState<string[]>([]);
     const [categoryInputValue, setCategoryInputValue] = useState("");
+
     const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+
+    // Cropper State
+    const [cropModalOpen, setCropModalOpen] = useState(false);
+    const [cropImageSrc, setCropImageSrc] = useState<string | null>(null);
+    const [cropTarget, setCropTarget] = useState<{ type: 'cover' | 'gallery', index?: number } | null>(null);
+
+    const onFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'gallery', index?: number) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0];
+            const src = URL.createObjectURL(file);
+            setCropImageSrc(src);
+            setCropTarget({ type, index });
+            setCropModalOpen(true);
+            // Clear input so same file can be selected again if cancelled
+            e.target.value = ''; 
+        }
+    };
+
+    const onCropComplete = (croppedBlob: Blob) => {
+        if (!cropTarget) return;
+
+        const file = new File([croppedBlob], "cropped-image.jpg", { type: "image/jpeg" });
+
+        if (cropTarget.type === 'cover') {
+            setForm(p => ({ ...p, cover_image: file }));
+        } else if (cropTarget.type === 'gallery' && typeof cropTarget.index === 'number') {
+             fileToDataURL(file).then(preview => {
+                 setForm(p => {
+                     const newImages = [...p.images];
+                     newImages[cropTarget.index!] = { file, preview };
+                     return { ...p, images: newImages };
+                 });
+             });
+        }
+        
+        setCropModalOpen(false);
+        setCropImageSrc(null);
+        setCropTarget(null);
+    };
+
+    const onCropCancel = () => {
+        setCropModalOpen(false);
+        setCropImageSrc(null);
+        setCropTarget(null);
+    };
 
     const fetchProducts = async () => {
         try {
@@ -829,18 +876,14 @@ export const ProductsTab: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">
                                         Cover Image (optional - will be added to images array)
+                                        <span className="block text-xs font-normal text-gray-500 mt-0.5">
+                                            Recommended size: 1280x720 px (16:9 aspect ratio)
+                                        </span>
                                     </label>
                                     <input
                                         type="file"
                                         accept="image/*"
-                                        onChange={(e) =>
-                                            setForm((p) => ({
-                                                ...p,
-                                                cover_image:
-                                                    e.target.files?.[0] ||
-                                                    null,
-                                            }))
-                                        }
+                                        onChange={(e) => onFileSelect(e, 'cover')}
                                         className="w-full px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#B00000] file:text-white hover:file:bg-red-800 file:cursor-pointer"
                                     />
                                 </div>
@@ -850,6 +893,9 @@ export const ProductsTab: React.FC = () => {
                                     <label className="block text-sm font-medium text-gray-700 mb-2">
                                         <ImageIcon className="w-4 h-4 inline mr-1" />
                                         Images
+                                        <span className="block text-xs font-normal text-gray-500 mt-0.5 ml-5">
+                                            Recommended size: 1280x720 px (16:9 aspect ratio)
+                                        </span>
                                     </label>
                                     <div className="space-y-3">
                                         {form.images.map((img, index) => (
@@ -864,19 +910,7 @@ export const ProductsTab: React.FC = () => {
                                                 <input
                                                     type="file"
                                                     accept="image/*"
-                                                    onChange={async (e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (file) {
-                                                            try {
-                                                                const preview = await fileToDataURL(file);
-                                                                const newImages = [...form.images];
-                                                                newImages[index] = { file, preview };
-                                                                setForm((p) => ({ ...p, images: newImages }));
-                                                            } catch (error) {
-                                                                alert("Failed to load image");
-                                                            }
-                                                        }
-                                                    }}
+                                                    onChange={(e) => onFileSelect(e, 'gallery', index)}
                                                     className="flex-1 px-4 py-2 border border-gray-300 rounded-lg file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-[#B00000] file:text-white hover:file:bg-red-800 file:cursor-pointer"
                                                 />
                                                 <button
@@ -1210,6 +1244,16 @@ export const ProductsTab: React.FC = () => {
                         </div>
                     </div>
                 </>
+            )}
+
+            {/* Image Cropper Modal */}
+            {cropModalOpen && cropImageSrc && (
+                <ImageCropper
+                    imageSrc={cropImageSrc}
+                    onCropComplete={onCropComplete}
+                    onCancel={onCropCancel}
+                    aspectRatio={16 / 9}
+                />
             )}
         </div>
     );

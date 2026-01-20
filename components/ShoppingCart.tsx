@@ -217,7 +217,12 @@ export default function ShoppingCart() {
                                             </div>
                                         )}
                                         
-                                        <div className="flex items-center gap-1.5">
+                                        {item.type === "digital" ? (
+                                            <span className="text-xs font-medium text-gray-600">
+                                                Qty: {item.quantity}
+                                            </span>
+                                        ) : (
+                                            <div className="flex items-center gap-1.5">
                                             <button
                                                 onClick={() =>
                                                     updateQuantity(
@@ -244,6 +249,7 @@ export default function ShoppingCart() {
                                                 <Plus className="w-3 h-3" />
                                             </button>
                                         </div>
+                                        )}
                                     </div>
                                     <button
                                         onClick={() => removeFromCart(item.id)}
