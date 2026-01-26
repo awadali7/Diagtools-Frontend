@@ -1117,7 +1117,7 @@ export const ProductsTab: React.FC = () => {
                                                                 digital_file: null // Clear upload if linking
                                                             }))
                                                         }
-                                                        placeholder="e.g. 847d-myfile.zip"
+                                                        placeholder="e.g. ps-advanced-2024.zip"
                                                         className="flex-1 px-4 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
                                                     />
                                                 </div>

@@ -14,6 +14,12 @@ type DigitalFile = {
 // listDigitalFiles: () => axiosInstance.get<{success:boolean, data: DigitalFile[]}>("/admin/digital-files"),
 // uploadDigitalFile: (data: FormData) => axiosInstance.post("/admin/digital-files", data),
 // deleteDigitalFile: (name: string) => axiosInstance.delete(`/admin/digital-files/${name}`),
+// downloadDigitalFile: (name: string) => axiosInstance.get(`/admin/digital-files/download/${name}`)
+//
+// NAMING LOGIC:
+// - If custom_name provided: use "custom_name.zip" (e.g., "ps-advanced-2024.zip")
+// - If duplicate exists: append (1), (2), etc. (e.g., "ps-advanced-2024 (1).zip")
+// - If no custom_name: use original filename with same duplicate logic
 
 const formatBytes = (bytes: number) => {
     if (bytes === 0) return "0 Bytes";
@@ -154,7 +160,7 @@ export const DigitalFilesTab = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-6 rounded-lg shadow-sm border border-gray-100">
                 <div>
                     <h2 className="text-xl font-bold text-slate-900">Digital Files Library</h2>
-                    <p className="text-sm text-gray-500 mt-1">Manage static ZIP/RAR files for digital products</p>
+                    <p className="text-sm text-gray-500 mt-1">Manage static ZIP/RAR files for digital products. Duplicates are auto-numbered.</p>
                 </div>
                 
 
@@ -194,11 +200,12 @@ export const DigitalFilesTab = () => {
                                         type="text"
                                         value={customName}
                                         onChange={(e) => setCustomName(e.target.value)}
-                                        placeholder="e.g. course-materials-v1"
+                                        placeholder="e.g. ps-advanced-2024"
                                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#B00000] focus:border-transparent"
                                     />
                                     <p className="text-xs text-gray-500 mt-1">
-                                        Providing a name will rename the file to <code>{`[UUID]-${customName || 'name'}.zip`}</code>
+                                        File will be saved as <code className="bg-gray-100 px-1 py-0.5 rounded">{customName || 'filename'}.zip</code>
+                                        {customName && <span className="block mt-1 text-gray-400">If duplicate exists, it will be saved as <code className="bg-gray-100 px-1 py-0.5 rounded">{customName} (1).zip</code></span>}
                                     </p>
                                 </div>
 
