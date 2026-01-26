@@ -22,6 +22,7 @@ import { paymentsApi } from "@/lib/api/payments";
 import { useAuth } from "@/contexts/AuthContext";
 import LoginDrawer from "@/components/LoginDrawer";
 import RegisterDrawer from "@/components/RegisterDrawer";
+import CourseTermsModal from "@/components/CourseTermsModal";
 import type { CourseDetails, Video } from "@/lib/api/types";
 import { setRedirectPath, shouldPreserveRedirect } from "@/lib/utils/redirect";
 
@@ -75,6 +76,7 @@ export default function CourseDetailPage() {
     const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
     const [isRegisterDrawerOpen, setIsRegisterDrawerOpen] = useState(false);
     const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+    const [showCourseTermsModal, setShowCourseTermsModal] = useState(false);
 
     // Inject CSS early to hide YouTube share button - must be at top level
     useEffect(() => {
@@ -636,14 +638,31 @@ export default function CourseDetailPage() {
                 return;
             }
 
-            // Check for KYC or Terms requirement errors ONLY if those flags are explicitly set
-            if (
-                errorResponse.requires_kyc === true ||
-                errorResponse.requires_terms_acceptance === true
-            ) {
-                // Redirect to KYC page with redirect path
+            // Check for Student KYC requirement
+            if (errorResponse.requires_kyc === true || errorResponse.requires_student_kyc === true) {
+                // Redirect to Student KYC page with redirect path
                 setRedirectPath(`/courses/${slug}`);
                 router.push(`/kyc?redirect=/courses/${slug}`);
+                return;
+            }
+
+            // Check for course terms requirement
+            if (errorResponse.requires_course_terms_acceptance === true) {
+                setShowCourseTermsModal(true);
+                return;
+            }
+
+            // Check for user type selection requirement
+            if (errorResponse.requires_user_type_selection === true) {
+                // User skipped, redirect to choose user type
+                setRedirectPath(`/courses/${slug}`);
+                router.push(`/choose-user-type?redirect=/courses/${slug}`);
+                return;
+            }
+
+            // Legacy check for terms acceptance (keeping for backwards compatibility)
+            if (errorResponse.requires_terms_acceptance === true) {
+                setShowCourseTermsModal(true);
                 return;
             }
 
@@ -1590,6 +1609,17 @@ export default function CourseDetailPage() {
                 onSwitchToLogin={() => {
                     setIsRegisterDrawerOpen(false);
                     handleOpenLoginDrawer();
+                }}
+            />
+
+            {/* Course Terms Modal */}
+            <CourseTermsModal
+                isOpen={showCourseTermsModal}
+                onClose={() => setShowCourseTermsModal(false)}
+                onAccept={() => {
+                    setShowCourseTermsModal(false);
+                    // Retry purchase after terms acceptance
+                    handlePurchaseCourse();
                 }}
             />
         </div>

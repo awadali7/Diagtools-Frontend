@@ -4,9 +4,10 @@ import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Upload, X, CheckCircle2, AlertCircle, Loader2, Plus } from "lucide-react";
 import { kycApi } from "@/lib/api/kyc";
-import { authApi } from "@/lib/api/auth";
+import { termsApi } from "@/lib/api/terms";
 import { useAuth } from "@/contexts/AuthContext";
 import type { KYCVerification } from "@/lib/api/types";
+import { toast } from "sonner";
 
 function KYCContent() {
     const router = useRouter();
@@ -124,14 +125,14 @@ function KYCContent() {
             // Validate all files
             for (const file of files) {
                 if (!allowedTypes.includes(file.type)) {
-                    setError(
+                    toast.error(
                         "Invalid file type. Only JPEG, PNG, WebP images and PDF files are allowed."
                     );
                     return;
                 }
 
                 if (file.size > 10 * 1024 * 1024) {
-                    setError("File size must be less than 10MB per file");
+                    toast.error("File size must be less than 10MB per file");
                     return;
                 }
             }
@@ -139,7 +140,6 @@ function KYCContent() {
             // Add new files to existing ones
             const newFiles = [...idProofFiles, ...files];
             setIdProofFiles(newFiles);
-            setError(null);
 
             // Create previews for images
             files.forEach((file) => {
@@ -178,18 +178,17 @@ function KYCContent() {
                 "image/webp",
             ];
             if (!allowedTypes.includes(file.type)) {
-                setError("Profile photo must be an image (JPEG, PNG, or WebP)");
+                toast.error("Profile photo must be an image (JPEG, PNG, or WebP)");
                 return;
             }
 
             // Validate file size (10MB)
             if (file.size > 10 * 1024 * 1024) {
-                setError("File size must be less than 10MB");
+                toast.error("File size must be less than 10MB");
                 return;
             }
 
             setProfilePhotoFile(file);
-            setError(null);
 
             // Create preview
             const reader = new FileReader();
@@ -212,7 +211,6 @@ function KYCContent() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
         setSuccess(false);
 
         // Validation
@@ -223,18 +221,18 @@ function KYCContent() {
             !formData.contact_number ||
             !formData.whatsapp_number
         ) {
-            setError("All fields are required");
+            toast.error("All fields are required");
             return;
         }
 
         // Check if files are provided (either new files or existing KYC)
         if (idProofFiles.length === 0 && !kycData?.id_proof_url) {
-            setError("At least one ID proof image is required");
+            toast.error("At least one ID proof image is required");
             return;
         }
 
         if (!profilePhotoFile && !kycData?.profile_photo_url) {
-            setError("Profile photo is required");
+            toast.error("Profile photo is required");
             return;
         }
 
@@ -268,16 +266,19 @@ function KYCContent() {
                     setKycData(kycResponse.data);
                 }
 
+                // Show success message
+                toast.success("Student KYC submitted successfully! Please review the terms and conditions.");
+
                 // Show terms and conditions modal
                 setShowTermsModal(true);
             } else {
-                setError(
+                toast.error(
                     response.message ||
                         "Failed to submit KYC. Please try again."
                 );
             }
         } catch (err: any) {
-            setError(
+            toast.error(
                 err.message ||
                     "Failed to submit KYC. Please check your connection and try again."
             );
@@ -291,22 +292,21 @@ function KYCContent() {
 
         try {
             setSubmitting(true);
-            // Call API to accept terms
-            const response = await authApi.acceptTerms();
+            // Call API to accept course terms
+            const response = await termsApi.acceptCourseTerms();
 
             if (response.success) {
                 setShowTermsModal(false);
-                // Refresh user profile to get updated terms_accepted_at
+                toast.success("Course terms accepted successfully!");
+                // Refresh user profile to get updated course_terms_accepted_at
                 await refreshProfile();
-                // Redirect after accepting terms if redirect path is provided
-                if (redirectPath) {
-                    router.push(redirectPath);
-                }
+                // Redirect after accepting terms
+                router.push(redirectPath || "/dashboard");
             } else {
-                setError(response.message || "Failed to accept terms. Please try again.");
+                toast.error(response.message || "Failed to accept terms. Please try again.");
             }
         } catch (err: any) {
-            setError(err.message || "Failed to accept terms. Please try again.");
+            toast.error(err.message || "Failed to accept terms. Please try again.");
         } finally {
             setSubmitting(false);
         }
@@ -329,11 +329,70 @@ function KYCContent() {
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-3xl font-bold text-slate-900 flex items-center">
-                    KYC Verification
+                    Student KYC Verification
                 </h1>
                 <p className="text-sm text-slate-600 mt-2">
                     Complete your KYC verification to access course features
                 </p>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="mb-8">
+                <div className="flex items-center justify-center">
+                    {/* Step 1 */}
+                    <div className="flex items-center">
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                            !kycData || kycData.status === "rejected" 
+                                ? "border-[#B00000] bg-[#B00000] text-white" 
+                                : "border-green-500 bg-green-500 text-white"
+                        }`}>
+                            {!kycData || kycData.status === "rejected" ? "1" : "✓"}
+                        </div>
+                        <div className="ml-3 text-sm font-medium text-slate-900">
+                            Fill KYC Details
+                        </div>
+                    </div>
+
+                    {/* Connector */}
+                    <div className={`w-24 h-1 mx-4 ${
+                        kycData && kycData.status !== "rejected" ? "bg-green-500" : "bg-gray-300"
+                    }`}></div>
+
+                    {/* Step 2 */}
+                    <div className="flex items-center">
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                            kycData && kycData.status === "pending"
+                                ? "border-yellow-500 bg-yellow-500 text-white"
+                                : kycData && kycData.status === "verified"
+                                ? "border-green-500 bg-green-500 text-white"
+                                : "border-gray-300 bg-white text-gray-400"
+                        }`}>
+                            {kycData && kycData.status === "verified" ? "✓" : "2"}
+                        </div>
+                        <div className="ml-3 text-sm font-medium text-slate-900">
+                            Admin Review
+                        </div>
+                    </div>
+
+                    {/* Connector */}
+                    <div className={`w-24 h-1 mx-4 ${
+                        kycData && kycData.status === "verified" ? "bg-green-500" : "bg-gray-300"
+                    }`}></div>
+
+                    {/* Step 3 */}
+                    <div className="flex items-center">
+                        <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                            kycData && kycData.status === "verified" && user.course_terms_accepted_at
+                                ? "border-green-500 bg-green-500 text-white"
+                                : "border-gray-300 bg-white text-gray-400"
+                        }`}>
+                            {kycData && kycData.status === "verified" && user.course_terms_accepted_at ? "✓" : "3"}
+                        </div>
+                        <div className="ml-3 text-sm font-medium text-slate-900">
+                            Accept Terms
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Status Banner */}

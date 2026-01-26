@@ -10,6 +10,8 @@ import { ordersApi } from "@/lib/api/orders";
 import { paymentsApi } from "@/lib/api/payments";
 import LoginDrawer from "@/components/LoginDrawer";
 import RegisterDrawer from "@/components/RegisterDrawer";
+import BusinessUpgradeModal from "@/components/BusinessUpgradeModal";
+import ProductTermsModal from "@/components/ProductTermsModal";
 import { setRedirectPath, shouldPreserveRedirect } from "@/lib/utils/redirect";
 
 type RazorpaySuccessResponse = {
@@ -64,6 +66,9 @@ export default function CheckoutPage() {
     const { isAuth, user } = useAuth();
     const [isLoginDrawerOpen, setIsLoginDrawerOpen] = useState(false);
     const [isRegisterDrawerOpen, setIsRegisterDrawerOpen] = useState(false);
+    const [showBusinessUpgradeModal, setShowBusinessUpgradeModal] =
+        useState(false);
+    const [showProductTermsModal, setShowProductTermsModal] = useState(false);
 
     const [formData, setFormData] = useState({
         firstName: user?.first_name || "",
@@ -324,17 +329,45 @@ export default function CheckoutPage() {
             setIsProcessingPayment(false); // Modal opened, user can interact
         } catch (err: any) {
             setIsProcessingPayment(false);
-            
+
             // Check for Product KYC requirement errors
             const errorResponse = err?.response?.data || err?.data || err || {};
-            
-            if (errorResponse.requires_product_kyc) {
-                // Redirect to Product KYC page with redirect path
-                alert(errorResponse.message || "Product KYC verification is required to complete this purchase.");
+
+            // Check for business upgrade requirement (Student trying to buy KYC product)
+            if (errorResponse.requires_business_upgrade) {
+                setShowBusinessUpgradeModal(true);
+                return;
+            }
+
+            // Check for business KYC requirement
+            if (
+                errorResponse.requires_business_kyc ||
+                errorResponse.requires_product_kyc
+            ) {
+                // Redirect to Business KYC page with redirect path
+                alert(
+                    errorResponse.message ||
+                        "Business KYC verification is required to complete this purchase."
+                );
                 router.push(`/kyc/product?redirect=/checkout`);
                 return;
             }
-            
+
+            // Check for product terms requirement
+            if (errorResponse.requires_product_terms_acceptance) {
+                setShowProductTermsModal(true);
+                return;
+            }
+
+            // Check for single quantity requirement
+            if (errorResponse.single_quantity_required) {
+                alert(
+                    errorResponse.message ||
+                        "Students can only purchase a single quantity of KYC-required products."
+                );
+                return;
+            }
+
             alert(err?.message || "Checkout failed");
         }
     };
@@ -662,20 +695,41 @@ export default function CheckoutPage() {
                                             ₹
                                             {(() => {
                                                 // Apply tiered pricing if available
-                                                if (item.quantity_pricing && item.quantity_pricing.length > 0) {
-                                                    const tier = item.quantity_pricing.find(t => {
-                                                        const minQty = t.min_qty || 1;
-                                                        const maxQty = t.max_qty || Infinity;
-                                                        return item.quantity >= minQty && item.quantity <= maxQty;
-                                                    });
-                                                    
+                                                if (
+                                                    item.quantity_pricing &&
+                                                    item.quantity_pricing
+                                                        .length > 0
+                                                ) {
+                                                    const tier =
+                                                        item.quantity_pricing.find(
+                                                            (t) => {
+                                                                const minQty =
+                                                                    t.min_qty ||
+                                                                    1;
+                                                                const maxQty =
+                                                                    t.max_qty ||
+                                                                    Infinity;
+                                                                return (
+                                                                    item.quantity >=
+                                                                        minQty &&
+                                                                    item.quantity <=
+                                                                        maxQty
+                                                                );
+                                                            }
+                                                        );
+
                                                     if (tier) {
-                                                        return (tier.price_per_item * item.quantity).toFixed(2);
+                                                        return (
+                                                            tier.price_per_item *
+                                                            item.quantity
+                                                        ).toFixed(2);
                                                     }
                                                 }
-                                                
+
                                                 // Fallback to base price
-                                                return (item.price * item.quantity).toFixed(2);
+                                                return (
+                                                    item.price * item.quantity
+                                                ).toFixed(2);
                                             })()}
                                         </p>
                                     </div>
@@ -717,6 +771,44 @@ export default function CheckoutPage() {
                 onSwitchToLogin={() => {
                     setIsRegisterDrawerOpen(false);
                     setIsLoginDrawerOpen(true);
+                }}
+            />
+
+            {/* Business Upgrade Modal */}
+            <BusinessUpgradeModal
+                isOpen={showBusinessUpgradeModal}
+                onClose={() => setShowBusinessUpgradeModal(false)}
+                onSuccess={() => {
+                    setShowBusinessUpgradeModal(false);
+                    // Retry checkout after upgrade
+                    const form = document.querySelector("form");
+                    if (form) {
+                        form.dispatchEvent(
+                            new Event("submit", {
+                                cancelable: true,
+                                bubbles: true,
+                            })
+                        );
+                    }
+                }}
+            />
+
+            {/* Product Terms Modal */}
+            <ProductTermsModal
+                isOpen={showProductTermsModal}
+                onClose={() => setShowProductTermsModal(false)}
+                onAccept={() => {
+                    setShowProductTermsModal(false);
+                    // Retry checkout after terms acceptance
+                    const form = document.querySelector("form");
+                    if (form) {
+                        form.dispatchEvent(
+                            new Event("submit", {
+                                cancelable: true,
+                                bubbles: true,
+                            })
+                        );
+                    }
                 }}
             />
         </div>

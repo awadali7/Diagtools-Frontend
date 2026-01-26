@@ -14,6 +14,9 @@ export interface User {
     first_name: string;
     last_name: string;
     role?: "user" | "admin";
+    user_type?: "student" | "business_owner" | null;
+    course_terms_accepted_at?: string | null;
+    product_terms_accepted_at?: string | null;
     last_login_at?: string;
     last_login_ip?: string;
     last_login_device?: DeviceInfo;

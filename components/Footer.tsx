@@ -25,6 +25,7 @@ export default function Footer() {
         "/courses",
         "/dashboard",
         "/admin",
+        "/choose-user-type",
     ];
 
     const shouldHideFooter =

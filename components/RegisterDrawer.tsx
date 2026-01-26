@@ -56,15 +56,17 @@ export default function RegisterDrawer({
         if (isAuth && isOpen) {
             onClose();
             if (!preventRedirect) {
-                // Use redirect path or default to current page or dashboard
+                // Use redirect path or default to user type selection page
                 const redirectPath = getAndClearRedirectPath();
                 if (redirectPath) {
-                    router.push(redirectPath);
+                    // Redirect to user type selection with the intended destination
+                    router.push(`/choose-user-type?redirect=${encodeURIComponent(redirectPath)}`);
                 } else if (pathname && shouldPreserveRedirect(pathname)) {
-                    // Stay on current page if it's a valid page
-                    router.refresh();
+                    // Redirect to user type selection with current page as destination
+                    router.push(`/choose-user-type?redirect=${encodeURIComponent(pathname)}`);
                 } else {
-                    router.push("/dashboard");
+                    // Default: redirect to user type selection then dashboard
+                    router.push("/choose-user-type?redirect=/dashboard");
                 }
             }
         }
@@ -144,15 +146,17 @@ export default function RegisterDrawer({
             });
             onClose();
             if (!preventRedirect) {
-                // Use redirect path or default to current page or dashboard
+                // Use redirect path or default to user type selection page
                 const redirectPath = getAndClearRedirectPath();
                 if (redirectPath) {
-                    router.push(redirectPath);
+                    // Redirect to user type selection with the intended destination
+                    router.push(`/choose-user-type?redirect=${encodeURIComponent(redirectPath)}`);
                 } else if (pathname && shouldPreserveRedirect(pathname)) {
-                    // Stay on current page if it's a valid page
-                    router.refresh();
+                    // Redirect to user type selection with current page as destination
+                    router.push(`/choose-user-type?redirect=${encodeURIComponent(pathname)}`);
                 } else {
-                    router.push("/dashboard");
+                    // Default: redirect to user type selection then dashboard
+                    router.push("/choose-user-type?redirect=/dashboard");
                 }
             }
         } catch (err: any) {

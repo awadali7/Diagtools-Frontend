@@ -218,6 +218,85 @@ export const KYCModal: React.FC<KYCModalProps> = ({
                                 </div>
                             </div>
 
+                            {/* Business Upgrade Information (if upgraded) */}
+                            {((kyc as any).business_id || (kyc as any).upgraded_to_business) && (
+                                <div className="mb-6 p-4 bg-green-50 border-2 border-green-200 rounded-lg">
+                                    <div className="flex items-center space-x-2 mb-4">
+                                        <span className="text-2xl">🏢</span>
+                                        <h3 className="text-lg font-semibold text-green-900">
+                                            Business Upgrade Information
+                                        </h3>
+                                        {(kyc as any).upgraded_to_business && (
+                                            <span className="px-2 py-1 bg-green-600 text-white text-xs font-semibold rounded-full">
+                                                ✓ UPGRADED
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {(kyc as any).business_id && (
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-600">
+                                                    Business ID / Registration Number
+                                                </label>
+                                                <p className="text-sm text-slate-900 mt-1 font-mono">
+                                                    {(kyc as any).business_id}
+                                                </p>
+                                            </div>
+                                        )}
+                                        {(kyc as any).business_location_link && (
+                                            <div>
+                                                <label className="text-sm font-medium text-gray-600">
+                                                    Business Location Link
+                                                </label>
+                                                <a
+                                                    href={(kyc as any).business_location_link}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-sm text-blue-600 hover:text-blue-800 mt-1 block truncate underline"
+                                                >
+                                                    {(kyc as any).business_location_link}
+                                                </a>
+                                            </div>
+                                        )}
+                                        {(kyc as any).business_proof_url && (
+                                            <div className="col-span-2">
+                                                <label className="text-sm font-medium text-gray-600 mb-2 block">
+                                                    Business Proof Document
+                                                </label>
+                                                <a
+                                                    href={`${BACKEND_BASE_URL}${(kyc as any).business_proof_url}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="block"
+                                                >
+                                                    <img
+                                                        src={`${BACKEND_BASE_URL}${(kyc as any).business_proof_url}`}
+                                                        alt="Business Proof"
+                                                        className="w-full max-w-md h-48 object-contain border border-gray-200 rounded-lg bg-white"
+                                                    />
+                                                </a>
+                                            </div>
+                                        )}
+                                        {(kyc as any).business_upgraded_at && (
+                                            <div className="col-span-2">
+                                                <label className="text-sm font-medium text-gray-600">
+                                                    Upgraded On
+                                                </label>
+                                                <p className="text-sm text-slate-900 mt-1">
+                                                    {formatDate((kyc as any).business_upgraded_at)}
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <div className="mt-4 p-3 bg-green-100 border border-green-300 rounded-lg">
+                                        <p className="text-xs text-green-800">
+                                            💡 <strong>Note:</strong> This student has upgraded their profile to include business information. 
+                                            Once approved, they will be able to purchase KYC-required products.
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
                             {/* Rejection Reason (if rejected) */}
                             {kyc.status === "rejected" &&
                                 kyc.rejection_reason && (

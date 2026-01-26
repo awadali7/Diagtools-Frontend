@@ -2,21 +2,32 @@
 
 import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Upload, X, CheckCircle2, AlertCircle, Loader2, Plus } from "lucide-react";
+import {
+    Upload,
+    X,
+    CheckCircle2,
+    AlertCircle,
+    Loader2,
+    Plus,
+} from "lucide-react";
 import { productKycApi } from "@/lib/api/product-kyc";
+import { termsApi } from "@/lib/api/terms";
 import { useAuth } from "@/contexts/AuthContext";
 import type { ProductKYCVerification } from "@/lib/api/types";
+import { toast } from "sonner";
 
 function ProductKYCContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { user } = useAuth();
+    const { user, refreshProfile } = useAuth();
     const redirectPath = searchParams.get("redirect");
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [kycData, setKycData] = useState<ProductKYCVerification | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [showTermsModal, setShowTermsModal] = useState(false);
+    const [termsAccepted, setTermsAccepted] = useState(false);
 
     // Form fields
     const [formData, setFormData] = useState({
@@ -28,9 +39,13 @@ function ProductKYCContent() {
 
     // File states
     const [idProofFiles, setIdProofFiles] = useState<File[]>([]);
-    const [idProofPreviews, setIdProofPreviews] = useState<Array<{ file: File | null; preview: string }>>([]);
+    const [idProofPreviews, setIdProofPreviews] = useState<
+        Array<{ file: File | null; preview: string }>
+    >([]);
     const [businessProofFiles, setBusinessProofFiles] = useState<File[]>([]);
-    const [businessProofPreviews, setBusinessProofPreviews] = useState<Array<{ file: File | null; preview: string }>>([]);
+    const [businessProofPreviews, setBusinessProofPreviews] = useState<
+        Array<{ file: File | null; preview: string }>
+    >([]);
 
     // Redirect if not authenticated
     useEffect(() => {
@@ -58,7 +73,10 @@ function ProductKYCContent() {
                     });
 
                     // Set preview URLs if files exist
-                    if (response.data.id_proofs && response.data.id_proofs.length > 0) {
+                    if (
+                        response.data.id_proofs &&
+                        response.data.id_proofs.length > 0
+                    ) {
                         const baseUrl =
                             process.env.NEXT_PUBLIC_API_URL ||
                             "http://localhost:5001";
@@ -66,21 +84,26 @@ function ProductKYCContent() {
                         setIdProofPreviews(
                             response.data.id_proofs.map((url: string) => ({
                                 file: null,
-                                preview: `${cleanBaseUrl}${url}`
+                                preview: `${cleanBaseUrl}${url}`,
                             }))
                         );
                     }
-                    
-                    if (response.data.business_proofs && response.data.business_proofs.length > 0) {
+
+                    if (
+                        response.data.business_proofs &&
+                        response.data.business_proofs.length > 0
+                    ) {
                         const baseUrl =
                             process.env.NEXT_PUBLIC_API_URL ||
                             "http://localhost:5001";
                         const cleanBaseUrl = baseUrl.replace(/\/api$/, "");
                         setBusinessProofPreviews(
-                            response.data.business_proofs.map((url: string) => ({
-                                file: null,
-                                preview: `${cleanBaseUrl}${url}`
-                            }))
+                            response.data.business_proofs.map(
+                                (url: string) => ({
+                                    file: null,
+                                    preview: `${cleanBaseUrl}${url}`,
+                                })
+                            )
                         );
                     }
                 }
@@ -117,21 +140,20 @@ function ProductKYCContent() {
 
             for (const file of files) {
                 if (!allowedTypes.includes(file.type)) {
-                    setError(
+                    toast.error(
                         "Invalid file type. Only JPEG, PNG, WebP images and PDF files are allowed."
                     );
                     return;
                 }
 
                 if (file.size > 10 * 1024 * 1024) {
-                    setError("File size must be less than 10MB per file");
+                    toast.error("File size must be less than 10MB per file");
                     return;
                 }
             }
 
             const newFiles = [...idProofFiles, ...files];
             setIdProofFiles(newFiles);
-            setError(null);
 
             files.forEach((file) => {
                 if (file.type.startsWith("image/")) {
@@ -154,7 +176,9 @@ function ProductKYCContent() {
         e.target.value = "";
     };
 
-    const handleBusinessProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleBusinessProofChange = (
+        e: React.ChangeEvent<HTMLInputElement>
+    ) => {
         const files = Array.from(e.target.files || []);
         if (files.length > 0) {
             const allowedTypes = [
@@ -167,21 +191,20 @@ function ProductKYCContent() {
 
             for (const file of files) {
                 if (!allowedTypes.includes(file.type)) {
-                    setError(
+                    toast.error(
                         "Invalid file type. Only JPEG, PNG, WebP images and PDF files are allowed."
                     );
                     return;
                 }
 
                 if (file.size > 10 * 1024 * 1024) {
-                    setError("File size must be less than 10MB per file");
+                    toast.error("File size must be less than 10MB per file");
                     return;
                 }
             }
 
             const newFiles = [...businessProofFiles, ...files];
             setBusinessProofFiles(newFiles);
-            setError(null);
 
             files.forEach((file) => {
                 if (file.type.startsWith("image/")) {
@@ -216,7 +239,6 @@ function ProductKYCContent() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError(null);
         setSuccess(false);
 
         // Validation
@@ -226,13 +248,16 @@ function ProductKYCContent() {
             !formData.contact_number ||
             !formData.whatsapp_number
         ) {
-            setError("All fields are required");
+            toast.error("All fields are required");
             return;
         }
 
         // Check if files are provided (either new files or existing KYC)
-        if (idProofFiles.length < 2 && (!kycData?.id_proofs || kycData.id_proofs.length < 2)) {
-            setError("At least 2 ID proof documents are required");
+        if (
+            idProofFiles.length < 2 &&
+            (!kycData?.id_proofs || kycData.id_proofs.length < 2)
+        ) {
+            toast.error("At least 2 ID proof documents are required");
             return;
         }
 
@@ -248,7 +273,7 @@ function ProductKYCContent() {
             idProofFiles.forEach((file) => {
                 formDataToSend.append("id_proofs", file);
             });
-            
+
             businessProofFiles.forEach((file) => {
                 formDataToSend.append("business_proofs", file);
             });
@@ -258,29 +283,60 @@ function ProductKYCContent() {
             if (response.success) {
                 setSuccess(true);
                 setKycData(response.data || null);
-                
+
                 // Refresh KYC data
                 const kycResponse = await productKycApi.getMyProductKYC();
                 if (kycResponse.success && kycResponse.data) {
                     setKycData(kycResponse.data);
                 }
 
-                // Redirect after short delay if redirect path is provided
-                if (redirectPath) {
-                    setTimeout(() => {
-                        router.push(redirectPath);
-                    }, 2000);
-                }
+                // Show success message
+                toast.success(
+                    "Business KYC submitted successfully! Please review the terms and conditions."
+                );
+
+                // Show product terms and conditions modal
+                setShowTermsModal(true);
             } else {
-                setError(
+                toast.error(
                     response.message ||
                         "Failed to submit Product KYC. Please try again."
                 );
             }
         } catch (err: any) {
-            setError(
+            toast.error(
                 err.message ||
                     "Failed to submit Product KYC. Please check your connection and try again."
+            );
+        } finally {
+            setSubmitting(false);
+        }
+    };
+
+    const handleTermsAccept = async () => {
+        if (!termsAccepted) return;
+
+        try {
+            setSubmitting(true);
+            // Call API to accept product terms
+            const response = await termsApi.acceptProductTerms();
+
+            if (response.success) {
+                setShowTermsModal(false);
+                toast.success("Product terms accepted successfully!");
+                // Refresh user profile to get updated product_terms_accepted_at
+                await refreshProfile();
+                // Redirect after accepting terms
+                router.push(redirectPath || "/dashboard");
+            } else {
+                toast.error(
+                    response.message ||
+                        "Failed to accept terms. Please try again."
+                );
+            }
+        } catch (err: any) {
+            toast.error(
+                err.message || "Failed to accept terms. Please try again."
             );
         } finally {
             setSubmitting(false);
@@ -304,11 +360,94 @@ function ProductKYCContent() {
             {/* Header */}
             <div className="mb-6">
                 <h1 className="text-3xl font-bold text-slate-900 flex items-center">
-                    Product KYC Verification
+                    Business KYC Verification
                 </h1>
                 <p className="text-sm text-slate-600 mt-2">
-                    Complete your Product KYC verification to purchase products that require it
+                    Complete your Business KYC verification to purchase products
                 </p>
+            </div>
+
+            {/* Step Indicator */}
+            <div className="mb-8">
+                <div className="flex items-center justify-center">
+                    {/* Step 1 */}
+                    <div className="flex items-center">
+                        <div
+                            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                                !kycData || kycData.status === "rejected"
+                                    ? "border-[#B00000] bg-[#B00000] text-white"
+                                    : "border-green-500 bg-green-500 text-white"
+                            }`}
+                        >
+                            {!kycData || kycData.status === "rejected"
+                                ? "1"
+                                : "✓"}
+                        </div>
+                        <div className="ml-3 text-sm font-medium text-slate-900">
+                            Fill KYC Details
+                        </div>
+                    </div>
+
+                    {/* Connector */}
+                    <div
+                        className={`w-24 h-1 mx-4 ${
+                            kycData && kycData.status !== "rejected"
+                                ? "bg-green-500"
+                                : "bg-gray-300"
+                        }`}
+                    ></div>
+
+                    {/* Step 2 */}
+                    <div className="flex items-center">
+                        <div
+                            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                                kycData && kycData.status === "pending"
+                                    ? "border-yellow-500 bg-yellow-500 text-white"
+                                    : kycData && kycData.status === "verified"
+                                    ? "border-green-500 bg-green-500 text-white"
+                                    : "border-gray-300 bg-white text-gray-400"
+                            }`}
+                        >
+                            {kycData && kycData.status === "verified"
+                                ? "✓"
+                                : "2"}
+                        </div>
+                        <div className="ml-3 text-sm font-medium text-slate-900">
+                            Admin Review
+                        </div>
+                    </div>
+
+                    {/* Connector */}
+                    <div
+                        className={`w-24 h-1 mx-4 ${
+                            kycData && kycData.status === "verified"
+                                ? "bg-green-500"
+                                : "bg-gray-300"
+                        }`}
+                    ></div>
+
+                    {/* Step 3 */}
+                    <div className="flex items-center">
+                        <div
+                            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
+                                kycData &&
+                                kycData.status === "verified" &&
+                                user.product_terms_accepted_at
+                                    ? "border-green-500 bg-green-500 text-white"
+                                    : "border-gray-300 bg-white text-gray-400"
+                            }`}
+                        >
+                            {kycData &&
+                            kycData.status === "verified" &&
+                            user.product_terms_accepted_at
+                                ? "✓"
+                                : "3"}
+                        </div>
+                        <div className="ml-3 text-sm font-medium text-slate-900">
+                            Accept Terms
+                        </div>
+                    </div>
+                </div>
             </div>
 
             {/* Status Banner */}
@@ -343,10 +482,23 @@ function ProductKYCContent() {
                                 Status: {kycData.status.toUpperCase()}
                             </h3>
                             {kycData.status === "verified" && (
-                                <p className="text-green-700 text-sm mt-1">
-                                    Your Product KYC has been verified. You can
-                                    now purchase products that require KYC.
-                                </p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-green-700 text-sm mt-1">
+                                        Your Product KYC has been verified. You
+                                        can now purchase products that require
+                                        KYC.
+                                    </p>
+                                    {redirectPath && (
+                                        <button
+                                            onClick={() =>
+                                                router.push(redirectPath)
+                                            }
+                                            className="ml-4 px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                                        >
+                                            Return to Checkout →
+                                        </button>
+                                    )}
+                                </div>
                             )}
                             {kycData.status === "rejected" &&
                                 kycData.rejection_reason && (
@@ -369,12 +521,22 @@ function ProductKYCContent() {
             {/* Success Message */}
             {success && (
                 <div className="mb-8 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                        <CheckCircle2 className="w-6 h-6 text-green-600" />
-                        <p className="text-green-800">
-                            Product KYC information submitted successfully! Your
-                            request is pending admin review.
-                        </p>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                            <CheckCircle2 className="w-6 h-6 text-green-600" />
+                            <p className="text-green-800">
+                                Product KYC information submitted successfully!
+                                Your request is pending admin review.
+                            </p>
+                        </div>
+                        {redirectPath && (
+                            <button
+                                onClick={() => router.push(redirectPath)}
+                                className="ml-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors whitespace-nowrap"
+                            >
+                                Return to Checkout →
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
@@ -424,8 +586,7 @@ function ProductKYCContent() {
                                 htmlFor="address"
                                 className="block text-sm font-medium text-slate-700 mb-2"
                             >
-                                Address{" "}
-                                <span className="text-red-500">*</span>
+                                Address <span className="text-red-500">*</span>
                             </label>
                             <textarea
                                 id="address"
@@ -491,8 +652,9 @@ function ProductKYCContent() {
                         ID Proof Documents
                     </h2>
                     <p className="text-sm text-slate-600 mb-4">
-                        Upload at least 2 ID proof documents (Aadhaar, PAN card, Passport, Voter ID, etc.) 
-                        in JPEG, PNG, WebP, or PDF format (Max 10MB per file).
+                        Upload at least 2 ID proof documents (Aadhaar, PAN card,
+                        Passport, Voter ID, etc.) in JPEG, PNG, WebP, or PDF
+                        format (Max 10MB per file).
                     </p>
 
                     {idProofPreviews.length > 0 ? (
@@ -500,9 +662,13 @@ function ProductKYCContent() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {idProofPreviews.map((previewItem, index) => (
                                     <div key={index} className="relative">
-                                        {previewItem.file?.type.startsWith("image/") ||
+                                        {previewItem.file?.type.startsWith(
+                                            "image/"
+                                        ) ||
                                         (previewItem.preview &&
-                                            !previewItem.preview.includes(".pdf")) ? (
+                                            !previewItem.preview.includes(
+                                                ".pdf"
+                                            )) ? (
                                             <img
                                                 src={previewItem.preview}
                                                 alt={`ID Proof ${index + 1}`}
@@ -521,7 +687,9 @@ function ProductKYCContent() {
                                         {kycData?.status !== "verified" && (
                                             <button
                                                 type="button"
-                                                onClick={() => removeIdProof(index)}
+                                                onClick={() =>
+                                                    removeIdProof(index)
+                                                }
                                                 className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
                                             >
                                                 <X className="w-4 h-4" />
@@ -570,7 +738,8 @@ function ProductKYCContent() {
                                     or drag and drop
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                    JPEG, PNG, WebP, or PDF (MAX. 10MB per file) - Minimum 2 files
+                                    JPEG, PNG, WebP, or PDF (MAX. 10MB per file)
+                                    - Minimum 2 files
                                 </p>
                             </div>
                             <input
@@ -592,44 +761,57 @@ function ProductKYCContent() {
                         Business Proof Documents (Optional)
                     </h2>
                     <p className="text-sm text-slate-600 mb-4">
-                        Upload business proof documents if applicable (GST certificate, Shop license, Company registration, etc.) 
+                        Upload business proof documents if applicable (GST
+                        certificate, Shop license, Company registration, etc.)
                         in JPEG, PNG, WebP, or PDF format (Max 10MB per file).
                     </p>
 
                     {businessProofPreviews.length > 0 ? (
                         <div className="space-y-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                {businessProofPreviews.map((previewItem, index) => (
-                                    <div key={index} className="relative">
-                                        {previewItem.file?.type.startsWith("image/") ||
-                                        (previewItem.preview &&
-                                            !previewItem.preview.includes(".pdf")) ? (
-                                            <img
-                                                src={previewItem.preview}
-                                                alt={`Business Proof ${index + 1}`}
-                                                className="w-full h-48 object-cover rounded-lg border border-gray-300"
-                                            />
-                                        ) : (
-                                            <div className="w-full h-48 p-8 border border-gray-300 rounded-lg bg-gray-50 flex flex-col items-center justify-center">
-                                                <p className="text-center text-slate-600">
-                                                    PDF File
-                                                </p>
-                                                <p className="text-center text-sm text-slate-500 mt-2">
-                                                    {previewItem.file?.name}
-                                                </p>
-                                            </div>
-                                        )}
-                                        {kycData?.status !== "verified" && (
-                                            <button
-                                                type="button"
-                                                onClick={() => removeBusinessProof(index)}
-                                                className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
-                                            >
-                                                <X className="w-4 h-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                ))}
+                                {businessProofPreviews.map(
+                                    (previewItem, index) => (
+                                        <div key={index} className="relative">
+                                            {previewItem.file?.type.startsWith(
+                                                "image/"
+                                            ) ||
+                                            (previewItem.preview &&
+                                                !previewItem.preview.includes(
+                                                    ".pdf"
+                                                )) ? (
+                                                <img
+                                                    src={previewItem.preview}
+                                                    alt={`Business Proof ${
+                                                        index + 1
+                                                    }`}
+                                                    className="w-full h-48 object-cover rounded-lg border border-gray-300"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-48 p-8 border border-gray-300 rounded-lg bg-gray-50 flex flex-col items-center justify-center">
+                                                    <p className="text-center text-slate-600">
+                                                        PDF File
+                                                    </p>
+                                                    <p className="text-center text-sm text-slate-500 mt-2">
+                                                        {previewItem.file?.name}
+                                                    </p>
+                                                </div>
+                                            )}
+                                            {kycData?.status !== "verified" && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() =>
+                                                        removeBusinessProof(
+                                                            index
+                                                        )
+                                                    }
+                                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-2 hover:bg-red-600 transition-colors"
+                                                >
+                                                    <X className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    )
+                                )}
                             </div>
                             {kycData?.status !== "verified" && (
                                 <div className="flex justify-center">
@@ -671,7 +853,8 @@ function ProductKYCContent() {
                                     or drag and drop
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                    JPEG, PNG, WebP, or PDF (MAX. 10MB per file) - Optional
+                                    JPEG, PNG, WebP, or PDF (MAX. 10MB per file)
+                                    - Optional
                                 </p>
                             </div>
                             <input
@@ -730,6 +913,265 @@ function ProductKYCContent() {
                     </div>
                 )}
             </form>
+
+            {/* Product Terms and Conditions Modal */}
+            {showTermsModal && (
+                <div className="fixed inset-0 z-50 overflow-y-auto">
+                    {/* Backdrop - non-clickable */}
+                    <div className="fixed inset-0 bg-black/50 transition-opacity duration-300"></div>
+
+                    {/* Modal */}
+                    <div className="relative min-h-screen flex items-center justify-center p-4">
+                        <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] my-8 flex flex-col">
+                            {/* Header */}
+                            <div className="flex items-center justify-between p-6 border-b border-gray-200 sticky top-0 bg-white z-10">
+                                <h2 className="text-2xl font-bold text-slate-900">
+                                    Product Terms and Conditions
+                                </h2>
+                                <button
+                                    onClick={() => {}}
+                                    className="p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-not-allowed opacity-50"
+                                    disabled
+                                    aria-label="Close modal"
+                                    title="Please accept terms to continue"
+                                >
+                                    <X className="w-5 h-5 text-gray-600" />
+                                </button>
+                            </div>
+
+                            {/* Content - Scrollable */}
+                            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                                {/* Section 1: Product Purchase Terms */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-3">
+                                        1. Product Purchase and Usage
+                                    </h3>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        1.1 Products purchased are for
+                                        legitimate business use only.
+                                    </p>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        1.2 All diagnostic tools and equipment
+                                        must be used in accordance with local
+                                        laws and regulations.
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                        1.3 The buyer is responsible for
+                                        ensuring they have the necessary
+                                        licenses and permissions to operate
+                                        diagnostic equipment.
+                                    </p>
+                                </div>
+
+                                {/* Section 2: KYC Verification */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-3">
+                                        2. KYC Verification
+                                    </h3>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        2.1 All provided KYC information must be
+                                        accurate and truthful.
+                                    </p>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        2.2 Providing false or misleading
+                                        information may result in order
+                                        cancellation and account termination.
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                        2.3 The company reserves the right to
+                                        verify any information provided.
+                                    </p>
+                                </div>
+
+                                {/* Section 3: Product Usage Restrictions */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-3">
+                                        3. Product Usage Restrictions
+                                    </h3>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        3.1 Products must not be used for
+                                        illegal activities, including but not
+                                        limited to:
+                                    </p>
+                                    <ul className="list-disc list-inside ml-4 mt-2 space-y-1 text-sm text-slate-700">
+                                        <li>
+                                            Vehicle theft or unauthorized access
+                                            to vehicle systems
+                                        </li>
+                                        <li>
+                                            Fraudulent odometer manipulation
+                                        </li>
+                                        <li>
+                                            Bypassing vehicle security systems
+                                            without proper authorization
+                                        </li>
+                                        <li>
+                                            Any activity that violates the laws
+                                            of India
+                                        </li>
+                                    </ul>
+                                    <p className="text-sm text-slate-700 mt-2">
+                                        3.2 The buyer accepts full
+                                        responsibility for how the products are
+                                        used.
+                                    </p>
+                                </div>
+
+                                {/* Section 4: Warranty and Returns */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-3">
+                                        4. Warranty and Returns
+                                    </h3>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        4.1 Product warranty terms are specified
+                                        on the product page and packaging.
+                                    </p>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        4.2 Returns are subject to our return
+                                        policy as stated on the website.
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                        4.3 Warranty does not cover misuse,
+                                        unauthorized modifications, or damage
+                                        from improper use.
+                                    </p>
+                                </div>
+
+                                {/* Section 5: Bulk Orders */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-3">
+                                        5. Bulk Orders
+                                    </h3>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        5.1 Business accounts are eligible for
+                                        bulk purchases.
+                                    </p>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        5.2 Bulk orders may have different
+                                        delivery timelines than single-unit
+                                        purchases.
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                        5.3 Special pricing for bulk orders is
+                                        at the discretion of the company.
+                                    </p>
+                                </div>
+
+                                {/* Section 6: Liability */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-3">
+                                        6. Liability
+                                    </h3>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        6.1 The buyer is responsible for safe
+                                        handling and operation of all purchased
+                                        equipment.
+                                    </p>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        6.2 The company is not liable for any
+                                        damage, injury, or loss resulting from
+                                        misuse of products.
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                        6.3 The buyer indemnifies the company
+                                        against any claims arising from their
+                                        use of the products.
+                                    </p>
+                                </div>
+
+                                {/* Section 7: Compliance */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-3">
+                                        7. Legal Compliance
+                                    </h3>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        7.1 The buyer confirms they will use all
+                                        products in compliance with applicable
+                                        laws.
+                                    </p>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        7.2 The buyer acknowledges that
+                                        automotive diagnostic equipment is
+                                        regulated in many jurisdictions.
+                                    </p>
+                                    <p className="text-sm text-slate-700">
+                                        7.3 The company reserves the right to
+                                        report suspected illegal activity to
+                                        authorities.
+                                    </p>
+                                </div>
+
+                                {/* Section 8: Agreement Confirmation */}
+                                <div>
+                                    <h3 className="text-lg font-bold text-slate-900 mb-3">
+                                        8. Agreement Confirmation
+                                    </h3>
+                                    <p className="text-sm text-slate-700 mb-2">
+                                        By purchasing products, the buyer
+                                        confirms that they:
+                                    </p>
+                                    <ul className="list-disc list-inside ml-4 mt-2 space-y-1 text-sm text-slate-700">
+                                        <li>
+                                            Have read and understood these
+                                            Product Terms & Conditions
+                                        </li>
+                                        <li>
+                                            Agree to use products for legitimate
+                                            business purposes only
+                                        </li>
+                                        <li>
+                                            Accept full responsibility for
+                                            product usage and compliance
+                                        </li>
+                                        <li>
+                                            Will not engage in illegal
+                                            activities using purchased products
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            {/* Footer - Sticky */}
+                            <div className="p-6 border-t border-gray-200 bg-white sticky bottom-0">
+                                {/* Agreement Checkbox */}
+                                <label className="flex items-start space-x-3 cursor-pointer mb-4">
+                                    <input
+                                        type="checkbox"
+                                        checked={termsAccepted}
+                                        onChange={(e) =>
+                                            setTermsAccepted(e.target.checked)
+                                        }
+                                        className="mt-1 w-5 h-5 text-[#B00000] border-gray-300 rounded focus:ring-[#B00000] focus:ring-2"
+                                    />
+                                    <span className="text-sm text-slate-700">
+                                        I have read and understood the Product
+                                        Terms and Conditions. I agree to use all
+                                        products for legitimate business
+                                        purposes only and comply with all
+                                        applicable laws and regulations.
+                                    </span>
+                                </label>
+
+                                {/* Accept Button */}
+                                <button
+                                    onClick={handleTermsAccept}
+                                    disabled={!termsAccepted || submitting}
+                                    className="w-full px-6 py-3 bg-[#B00000] text-white rounded-lg font-medium hover:bg-red-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                                >
+                                    {submitting ? (
+                                        <>
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                            <span>Processing...</span>
+                                        </>
+                                    ) : (
+                                        <span>Accept and Continue</span>
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -747,4 +1189,3 @@ export default function ProductKYCPage() {
         </Suspense>
     );
 }
-
