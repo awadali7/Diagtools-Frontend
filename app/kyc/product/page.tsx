@@ -374,59 +374,39 @@ function ProductKYCContent() {
                     <div className="flex items-center">
                         <div
                             className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                                !kycData || kycData.status === "rejected"
-                                    ? "border-[#B00000] bg-[#B00000] text-white"
-                                    : "border-green-500 bg-green-500 text-white"
-                            }`}
-                        >
-                            {!kycData || kycData.status === "rejected"
-                                ? "1"
-                                : "✓"}
-                        </div>
-                        <div className="ml-3 text-sm font-medium text-slate-900">
-                            Fill KYC Details
-                        </div>
-                    </div>
-
-                    {/* Connector */}
-                    <div
-                        className={`w-24 h-1 mx-4 ${
-                            kycData && kycData.status !== "rejected"
-                                ? "bg-green-500"
-                                : "bg-gray-300"
-                        }`}
-                    ></div>
-
-                    {/* Step 2 */}
-                    <div className="flex items-center">
-                        <div
-                            className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
-                                kycData && kycData.status === "pending"
-                                    ? "border-yellow-500 bg-yellow-500 text-white"
-                                    : kycData && kycData.status === "verified"
+                                kycData && kycData.status === "verified"
                                     ? "border-green-500 bg-green-500 text-white"
-                                    : "border-gray-300 bg-white text-gray-400"
+                                    : !kycData || kycData.status === "rejected"
+                                    ? "border-[#B00000] bg-[#B00000] text-white"
+                                    : "border-yellow-500 bg-yellow-500 text-white"
                             }`}
                         >
                             {kycData && kycData.status === "verified"
                                 ? "✓"
-                                : "2"}
+                                : "1"}
                         </div>
-                        <div className="ml-3 text-sm font-medium text-slate-900">
-                            Admin Review
+                        <div className="ml-3">
+                            <div className="text-sm font-medium text-slate-900">
+                                Submit KYC
+                            </div>
+                            {kycData && kycData.status === "pending" && (
+                                <div className="text-xs text-yellow-600">
+                                    Under Review
+                                </div>
+                            )}
                         </div>
                     </div>
 
                     {/* Connector */}
                     <div
-                        className={`w-24 h-1 mx-4 ${
+                        className={`w-32 h-1 mx-4 ${
                             kycData && kycData.status === "verified"
                                 ? "bg-green-500"
                                 : "bg-gray-300"
                         }`}
                     ></div>
 
-                    {/* Step 3 */}
+                    {/* Step 2 */}
                     <div className="flex items-center">
                         <div
                             className={`flex items-center justify-center w-10 h-10 rounded-full border-2 ${
@@ -441,7 +421,7 @@ function ProductKYCContent() {
                             kycData.status === "verified" &&
                             user.product_terms_accepted_at
                                 ? "✓"
-                                : "3"}
+                                : "2"}
                         </div>
                         <div className="ml-3 text-sm font-medium text-slate-900">
                             Accept Terms
