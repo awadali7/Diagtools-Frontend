@@ -17,7 +17,6 @@ export default function ConditionalSidebar() {
         "/register",
         "/reset-password",
         "/terms",
-        "/choose-user-type",
     ];
 
     // Pages where sidebar should be shown (authenticated pages)

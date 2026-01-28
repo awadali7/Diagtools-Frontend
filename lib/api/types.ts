@@ -14,9 +14,6 @@ export interface User {
     first_name: string;
     last_name: string;
     role?: "user" | "admin";
-    user_type?: "student" | "business_owner" | null;
-    course_terms_accepted_at?: string | null;
-    product_terms_accepted_at?: string | null;
     last_login_at?: string;
     last_login_ip?: string;
     last_login_device?: DeviceInfo;
@@ -345,7 +342,7 @@ export interface UpdateBlogPostRequest {
     is_published?: boolean;
 }
 
-// KYC Types (Course KYC)
+// KYC Types
 export interface KYCVerification {
     id: string;
     user_id: string;
@@ -356,28 +353,6 @@ export interface KYCVerification {
     whatsapp_number: string;
     id_proof_url: string;
     profile_photo_url: string;
-    status: "pending" | "verified" | "rejected";
-    rejection_reason?: string;
-    verified_by?: string;
-    verified_at?: string;
-    created_at?: string;
-    updated_at?: string;
-    user_email?: string;
-    user_first_name?: string;
-    user_last_name?: string;
-    verifier_email?: string;
-}
-
-// Product KYC Types
-export interface ProductKYCVerification {
-    id: string;
-    user_id: string;
-    full_name: string;
-    address: string;
-    contact_number: string;
-    whatsapp_number: string;
-    id_proofs: string[]; // Array of ID proof URLs (minimum 2)
-    business_proofs: string[]; // Array of business proof URLs (optional)
     status: "pending" | "verified" | "rejected";
     rejection_reason?: string;
     verified_by?: string;
@@ -409,8 +384,8 @@ export interface Product {
     slug: string;
     description?: string;
     price: number;
-    category?: string | null; // First category for backward compatibility
-    categories?: string[]; // Array of up to 4 categories
+    category?: string | null;  // First category for backward compatibility
+    categories?: string[];     // Array of up to 4 categories
     // Backend returns product_type + we also include a friendlier `type`
     product_type?: ProductType;
     type: ProductType;
@@ -432,22 +407,11 @@ export interface Product {
     rating?: number;
     reviews_count?: number;
     is_active?: boolean;
-    is_coming_soon?: boolean;
-    requires_kyc?: boolean; // Product requires KYC verification to purchase
     created_at?: string;
     updated_at?: string;
-
-    // Tiered pricing (quantity ranges) - API returns as tiered_pricing
-    tiered_pricing?: Array<{
-        min_qty: number;
-        max_qty: number | null;
-        price_per_item: number;
-    }>;
-    quantity_pricing?: Array<{
-        min_qty: number;
-        max_qty: number | null;
-        price_per_item: number;
-    }>;
+    
+    // Tiered pricing (quantity ranges)
+    quantity_pricing?: Array<{ min_qty: number; max_qty: number | null; price_per_item: number }>;
 }
 
 export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded";

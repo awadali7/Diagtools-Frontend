@@ -11,32 +11,20 @@ export default function Footer() {
     const pathname = usePathname();
     const { isAuth } = useAuth();
 
-    // Hide footer on specific routes
-    const routesWithoutFooter = [
-        "/my-learning",
-        "/orders",
-        "/downloads",
-        "/kyc",
-        "/profile",
-        "/settings",
-        "/shop",
-        "/notifications",
-        "/blog",
-        "/courses",
-        "/dashboard",
-        "/admin",
-        "/choose-user-type",
-    ];
-
+    // Hide footer when user is logged in and on blog, courses, dashboard, or admin routes
     const shouldHideFooter =
-        routesWithoutFooter.some((route) => pathname?.startsWith(route));
+        isAuth &&
+        (pathname?.startsWith("/blog") ||
+            pathname?.startsWith("/courses") ||
+            pathname?.startsWith("/dashboard") ||
+            pathname?.startsWith("/admin"));
 
     if (shouldHideFooter) {
         return null;
     }
 
     return (
-        <footer className="bg-white border-t border-gray-200">
+        <footer className="bg-slate-900 text-white">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-8">
                     {/* Company Info */}
@@ -48,11 +36,11 @@ export default function Footer() {
                                     alt="DIAGTOOLS"
                                     width={200}
                                     height={60}
-                                    className="h-8 w-auto object-contain"
+                                    className="h-8 w-auto object-contain brightness-0 invert"
                                 />
                             </div>
                         </div>
-                        <p className="text-gray-600 text-sm mb-4">
+                        <p className="text-gray-400 text-sm mb-4">
                             India's leading provider of advanced automotive
                             diagnostic tools, key programming solutions, and
                             specialized online training.
@@ -61,14 +49,14 @@ export default function Footer() {
 
                     {/* Information */}
                     <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                        <h3 className="text-lg font-semibold mb-4">
                             Information
                         </h3>
                         <ul className="space-y-2">
                             <li>
                                 <Link
                                     href="#"
-                                    className="text-gray-600 hover:text-[#B00000] transition-colors text-sm"
+                                    className="text-gray-400 hover:text-white transition-colors text-sm"
                                 >
                                     Privacy Policy
                                 </Link>
@@ -76,7 +64,7 @@ export default function Footer() {
                             <li>
                                 <Link
                                     href="/terms"
-                                    className="text-gray-600 hover:text-[#B00000] transition-colors text-sm"
+                                    className="text-gray-400 hover:text-white transition-colors text-sm"
                                 >
                                     Terms & Conditions
                                 </Link>
@@ -84,7 +72,7 @@ export default function Footer() {
                             <li>
                                 <Link
                                     href="#"
-                                    className="text-gray-600 hover:text-[#B00000] transition-colors text-sm"
+                                    className="text-gray-400 hover:text-white transition-colors text-sm"
                                 >
                                     Refunds Policy & Information
                                 </Link>
@@ -92,7 +80,7 @@ export default function Footer() {
                             <li>
                                 <Link
                                     href="#"
-                                    className="text-gray-600 hover:text-[#B00000] transition-colors text-sm"
+                                    className="text-gray-400 hover:text-white transition-colors text-sm"
                                 >
                                     Admission Team
                                 </Link>
@@ -102,7 +90,7 @@ export default function Footer() {
 
                     {/* Social Media */}
                     <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                        <h3 className="text-lg font-semibold mb-4">
                             Follow Us
                         </h3>
                         <div className="flex space-x-4">
@@ -110,7 +98,7 @@ export default function Footer() {
                                 href="#"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-600 hover:text-[#B00000] transition-colors"
+                                className="text-gray-400 hover:text-white transition-colors"
                                 aria-label="Instagram"
                             >
                                 <Instagram className="w-6 h-6" />
@@ -119,7 +107,7 @@ export default function Footer() {
                                 href="#"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-600 hover:text-[#B00000] transition-colors"
+                                className="text-gray-400 hover:text-white transition-colors"
                                 aria-label="Facebook"
                             >
                                 <Facebook className="w-6 h-6" />
@@ -128,7 +116,7 @@ export default function Footer() {
                                 href="#"
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-gray-600 hover:text-[#B00000] transition-colors"
+                                className="text-gray-400 hover:text-white transition-colors"
                                 aria-label="YouTube"
                             >
                                 <Youtube className="w-6 h-6" />
@@ -138,19 +126,19 @@ export default function Footer() {
 
                     {/* Contact Info */}
                     <div>
-                        <h3 className="text-lg font-semibold text-slate-900 mb-4">
+                        <h3 className="text-lg font-semibold mb-4">
                             Contact Us
                         </h3>
                         <ul className="space-y-3">
                             <li className="flex items-start space-x-3">
-                                <Phone className="w-5 h-5 text-gray-500 mt-0.5 shrink-0" />
-                                <span className="text-gray-600 text-sm">
+                                <Phone className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                                <span className="text-gray-400 text-sm">
                                     8714388741
                                 </span>
                             </li>
                             <li className="flex items-start space-x-3">
-                                <MapPin className="w-5 h-5 text-gray-500 mt-0.5 shrink-0" />
-                                <span className="text-gray-600 text-sm">
+                                <MapPin className="w-5 h-5 text-gray-400 mt-0.5 shrink-0" />
+                                <span className="text-gray-400 text-sm">
                                     Pezhakkppilly P.O
                                     <br />
                                     Muvattupezha 686673
@@ -161,9 +149,9 @@ export default function Footer() {
                 </div>
 
                 {/* Bottom Bar */}
-                <div className="border-t border-gray-200 pt-8 mt-8">
+                <div className="border-t border-gray-800 pt-8 mt-8">
                     <div className="text-center">
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-gray-400 text-sm">
                             © {new Date().getFullYear()} DiagTools. All rights
                             reserved.
                         </p>

@@ -13,7 +13,6 @@ import ConditionalSidebar from "@/components/ConditionalSidebar";
 import PushNotificationInitializer from "@/components/PushNotificationInitializer";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import ShoppingCart from "@/components/ShoppingCart";
-import { Toaster } from "sonner";
 
 // Bricolage Grotesque for headings
 const bricolageGrotesque = Bricolage_Grotesque({
@@ -163,7 +162,6 @@ export default function RootLayout({
                                 <ShoppingCart />
                             </div>
                         </SidebarProvider>
-                        <Toaster position="top-right" richColors />
                     </CartProvider>
                 </AuthProvider>
             </body>

@@ -1,16 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { X, Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import {
-    getAndClearRedirectPath,
-    setRedirectPath,
-    shouldPreserveRedirect,
-} from "@/lib/utils/redirect";
 
 interface RegisterDrawerProps {
     isOpen: boolean;
@@ -26,7 +21,6 @@ export default function RegisterDrawer({
     preventRedirect = false,
 }: RegisterDrawerProps) {
     const router = useRouter();
-    const pathname = usePathname();
     const { register, isAuth } = useAuth();
 
     const [formData, setFormData] = useState({
@@ -44,33 +38,15 @@ export default function RegisterDrawer({
         [key: string]: string;
     }>({});
 
-    // Preserve current path when drawer opens
-    React.useEffect(() => {
-        if (isOpen && pathname && shouldPreserveRedirect(pathname)) {
-            setRedirectPath(pathname);
-        }
-    }, [isOpen, pathname]);
-
     // Close drawer if user is authenticated
     React.useEffect(() => {
         if (isAuth && isOpen) {
             onClose();
             if (!preventRedirect) {
-                // Use redirect path or default to user type selection page
-                const redirectPath = getAndClearRedirectPath();
-                if (redirectPath) {
-                    // Redirect to user type selection with the intended destination
-                    router.push(`/choose-user-type?redirect=${encodeURIComponent(redirectPath)}`);
-                } else if (pathname && shouldPreserveRedirect(pathname)) {
-                    // Redirect to user type selection with current page as destination
-                    router.push(`/choose-user-type?redirect=${encodeURIComponent(pathname)}`);
-                } else {
-                    // Default: redirect to user type selection then dashboard
-                    router.push("/choose-user-type?redirect=/dashboard");
-                }
+                router.push("/dashboard");
             }
         }
-    }, [isAuth, isOpen, onClose, router, preventRedirect, pathname]);
+    }, [isAuth, isOpen, onClose, router, preventRedirect]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target;
@@ -129,7 +105,6 @@ export default function RegisterDrawer({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
-        setValidationErrors({});
 
         if (!validateForm()) {
             return;
@@ -146,52 +121,10 @@ export default function RegisterDrawer({
             });
             onClose();
             if (!preventRedirect) {
-                // Use redirect path or default to user type selection page
-                const redirectPath = getAndClearRedirectPath();
-                if (redirectPath) {
-                    // Redirect to user type selection with the intended destination
-                    router.push(`/choose-user-type?redirect=${encodeURIComponent(redirectPath)}`);
-                } else if (pathname && shouldPreserveRedirect(pathname)) {
-                    // Redirect to user type selection with current page as destination
-                    router.push(`/choose-user-type?redirect=${encodeURIComponent(pathname)}`);
-                } else {
-                    // Default: redirect to user type selection then dashboard
-                    router.push("/choose-user-type?redirect=/dashboard");
-                }
+                router.push("/dashboard");
             }
         } catch (err: any) {
-            // Handle validation errors from backend
-            if (err?.data?.errors && Array.isArray(err.data.errors)) {
-                const fieldErrors: { [key: string]: string } = {};
-                let generalError = null;
-
-                err.data.errors.forEach((error: any) => {
-                    if (error.path) {
-                        // Map backend field names to form field names
-                        const fieldName = error.path;
-                        fieldErrors[fieldName] = error.msg || error.message;
-                    } else {
-                        generalError = error.msg || error.message;
-                    }
-                });
-
-                setValidationErrors(fieldErrors);
-                // Only show general error if there are no field-specific errors
-                setError(
-                    Object.keys(fieldErrors).length === 0
-                        ? generalError ||
-                              err.data.message ||
-                              "Validation failed. Please check the form."
-                        : null
-                );
-            } else {
-                // Handle general errors
-                setError(
-                    err.message ||
-                        err.data?.message ||
-                        "Registration failed. Please try again."
-                );
-            }
+            setError(err.message || "Registration failed. Please try again.");
         } finally {
             setIsSubmitting(false);
         }

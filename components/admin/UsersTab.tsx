@@ -48,12 +48,6 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                 Role
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                User Type
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Terms
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Last Login
                             </th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -95,55 +89,6 @@ export const UsersTab: React.FC<UsersTabProps> = ({
                                         >
                                             {u.role || "user"}
                                         </span>
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        {(u as any).user_type ? (
-                                            <span
-                                                className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                                                    (u as any).user_type === "student"
-                                                        ? "bg-blue-100 text-blue-800"
-                                                        : (u as any).user_type === "business_owner"
-                                                        ? "bg-green-100 text-green-800"
-                                                        : "bg-gray-100 text-gray-800"
-                                                }`}
-                                            >
-                                                {(u as any).user_type === "student"
-                                                    ? "🎓 Student"
-                                                    : (u as any).user_type === "business_owner"
-                                                    ? "🏢 Business"
-                                                    : "Not Set"}
-                                            </span>
-                                        ) : (
-                                            <span className="text-xs text-gray-400">
-                                                Not set
-                                            </span>
-                                        )}
-                                    </td>
-                                    <td className="px-6 py-4 whitespace-nowrap">
-                                        <div className="flex flex-col space-y-1">
-                                            {(u as any).course_terms_accepted_at ? (
-                                                <span className="text-xs text-green-600 flex items-center">
-                                                    <span className="mr-1">📚</span>
-                                                    Course ✓
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-gray-400">
-                                                    <span className="mr-1">📚</span>
-                                                    Course ✗
-                                                </span>
-                                            )}
-                                            {(u as any).product_terms_accepted_at ? (
-                                                <span className="text-xs text-green-600 flex items-center">
-                                                    <span className="mr-1">🛒</span>
-                                                    Product ✓
-                                                </span>
-                                            ) : (
-                                                <span className="text-xs text-gray-400">
-                                                    <span className="mr-1">🛒</span>
-                                                    Product ✗
-                                                </span>
-                                            )}
-                                        </div>
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                         {u.last_login_at
