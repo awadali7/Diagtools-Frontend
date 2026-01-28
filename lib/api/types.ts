@@ -365,6 +365,28 @@ export interface KYCVerification {
     verifier_email?: string;
 }
 
+// Product KYC Types (for business/reseller verification)
+export interface ProductKYCVerification {
+    id: string;
+    user_id: string;
+    full_name: string;
+    address: string;
+    contact_number: string;
+    whatsapp_number: string;
+    id_proofs: string[];  // Array of file URLs
+    business_proofs: string[];  // Array of file URLs (optional)
+    status: "pending" | "verified" | "rejected";
+    rejection_reason?: string;
+    verified_by?: string;
+    verified_at?: string;
+    created_at?: string;
+    updated_at?: string;
+    user_email?: string;
+    user_first_name?: string;
+    user_last_name?: string;
+    verifier_email?: string;
+}
+
 // =========================
 // Shop / Products / Orders
 // =========================
@@ -393,6 +415,8 @@ export interface Product {
     images?: string[];
     videos?: ProductVideo[];
     is_featured?: boolean;
+    is_coming_soon?: boolean;
+    requires_kyc?: boolean;
 
     // Digital product fields
     digital_file_name?: string | null;
@@ -412,6 +436,7 @@ export interface Product {
     
     // Tiered pricing (quantity ranges)
     quantity_pricing?: Array<{ min_qty: number; max_qty: number | null; price_per_item: number }>;
+    tiered_pricing?: Array<{ min_qty: number; max_qty: number | null; price_per_item: number }>;  // Alias for quantity_pricing
 }
 
 export type OrderStatus = "pending" | "paid" | "cancelled" | "refunded";
